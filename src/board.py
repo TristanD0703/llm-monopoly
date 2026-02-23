@@ -3,8 +3,7 @@ from typing import Any, Callable, Optional
 
 from .auction import Auction
 
-from .io.base_io import BaseIO
-from .io.io_data_models import ActionItem, ActionRequest, GameStateModel
+from .io.io_data_models import ActionInput, ActionItem, ActionRequest, GameStateModel
 from .player import Player
 from .spaces.space import Space
 
@@ -14,7 +13,6 @@ class BoardState:
 
     def __init__(self, 
                  property_groups: dict[str, list[int]], 
-                 io: BaseIO,
                  random_seed: Optional[int]
                  ):
 
@@ -90,11 +88,17 @@ class BoardState:
 
     def next_turn(self):
         while self.running:
+            if self.get_curr_player().bankrupt:
+                continue
+
             state = self.build_game_state()
             req = self.build_action_request()
             curr_player = self.get_curr_player()
             res = curr_player.io.request_action(req, state)
-            self.run_action(res.action_name)
+            if type(res) == ActionInput:
+                self.run_action(res.action_name)
+            else:
+                raise ValueError("Expecting ActionInput, got ActionInputInt")
 
             winner = self.check_winner()
             if winner:
@@ -182,4 +186,33 @@ class BoardState:
         auc.board = self
         winner, price = auc.run()
         self.award_curr_property(winner, price)
-        
+
+    def insufficient_funds_flow(self, player: Player, required_amount: int):
+        while not player.can_afford(required_amount):
+            actions: list[ActionItem] = []
+            if len(player.property_idexes_owned) > 0:
+                actions.append(ActionItem(action_name="Mortgage properties", description="Mortgage properties to pay what's due"))
+            actions.append(ActionItem(action_name="Trade", description="Trade with another player."))
+            actions.append(ActionItem(action_name="Declare bankruptcy", description="If you cannot gather enough money to pay, exit the game."))
+
+            req = ActionRequest(request=f"You don't have enough money! You currently have ${player.money}, but you owe ${required_amount}. What will you do to resolve this?", 
+                                available_actions=actions)
+            res = player.io.request_action(req, game_state=self.build_game_state()) 
+
+            if type(res) == ActionInput:
+                if res.action_name == "Mortgage properties":
+                    self.mortgage_properties(player)
+                elif res.action_name == "Trade":
+                    self.trade(player)
+                elif res.action_name == "Declare Bankruptcy":
+                    player.bankrupt = True
+                    return
+                else:
+                    raise ValueError("Action input not recognized")
+
+
+    def mortgage_properties(self, player: Player):
+        pass
+
+    def trade(self, player: Player):
+        pass

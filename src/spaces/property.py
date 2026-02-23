@@ -54,6 +54,7 @@ class BaseProperty(Space):
         else:
             curr_rent = self.get_curr_rent()
             if not player.transact(-curr_rent):
+                self.board.insufficient_funds_flow(player, curr_rent)
                 # TODO: add actions to reconcile not enough funds
                 raise ValueError("User cannot pay rent. Die.")
             self.owned_by.transact(curr_rent)
