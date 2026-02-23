@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Any, Optional
 
 class Player:
     def __init__(self, name: str, id: int, initial_money: int=1500):
@@ -9,6 +9,7 @@ class Player:
         self.is_in_jail = False
         self.name = name
         self.id = id
+        self.game: Any = None 
 
     def set_position(self, pos: int) -> bool:
         if not self.is_in_jail:
@@ -35,8 +36,15 @@ class Player:
         return True
     
     def incarcerate(self):
+        if not self.game:
+            raise ValueError("Board not defined")
+
         self.is_in_jail = True
+        self.curr_index: int = self.game.jail_index
 
     def release(self):
         self.is_in_jail = False
+
+    def inject_board(self, board: Any):
+        self.game = board
 

@@ -1,6 +1,5 @@
-from board import BoardState
-from player import Player
-from space import Space
+from ..player import Player
+from .space import Space
 
 
 class BaseProperty(Space):
@@ -10,28 +9,32 @@ class BaseProperty(Space):
                  property_group: str, 
                  mortgage_value: int, 
                  rent_costs: list[int], 
-                 board: BoardState
                  ):
+        super().__init__(name)
         if price <= 0:
             raise ValueError(f"Property must be worth something silly! You put {price}")        
 
         if mortgage_value <= 0:
             raise ValueError(f"Mortgage value must be worth something silly! You put {price}")        
-        
-        min_cost = min(rent_costs) 
-        if min_cost <= 0:
-            raise ValueError(f"Property must have rent prices! You put {min_cost}")        
+
+
+        if len(rent_costs) > 0:
+            min_cost = min(rent_costs)
+            if min_cost <= 0:
+                raise ValueError(f"Property must have rent prices! You put {min_cost}")        
 
         self.owned_by: Player | None = None
-        self.name = name
         self.price = price
         self.mortgage_value = mortgage_value
         self.rent_costs = rent_costs
-        self.board = board
+        self.board = None 
         self.is_mortgaged = False
         self.property_group = property_group
 
     def land(self, player: Player):
+        if not self.board:
+            raise ValueError("Board not assigned.")
+
         if not self.owned_by:
             if self.offer_to_buy(player) and player.transact(self.price):
                 self.board.award_curr_property()
@@ -44,6 +47,7 @@ class BaseProperty(Space):
             if not player.transact(-curr_rent):
                 # TODO: add actions to reconcile not enough funds
                 raise ValueError("User cannot pay rent. Die.")
+            self.owned_by.transact(curr_rent)
 
     def offer_to_buy(self, player: Player) -> bool:
         """Ask player if they want to buy. If they cannot afford or they deny, return false"""

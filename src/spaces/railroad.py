@@ -1,5 +1,4 @@
-from board import BoardState
-from spaces.property import BaseProperty
+from .property import BaseProperty
 
 class Railroad(BaseProperty):
     RAILROAD_PROPERTY_GROUP = "railroad"
@@ -9,16 +8,18 @@ class Railroad(BaseProperty):
                  price: int, 
                  mortgage_value: int, 
                  rent_costs: list[int], 
-                 board: BoardState
                  ):
-        super().__init__(name, price, self.RAILROAD_PROPERTY_GROUP, mortgage_value, rent_costs, board)
+        super().__init__(name, price, self.RAILROAD_PROPERTY_GROUP, mortgage_value, rent_costs)
     pass
 
     def get_curr_rent(self) -> int:
+        if not self.board:
+            raise ValueError("Board not assigned")
+
         if not self.owned_by:
             raise ValueError("Cannot get rent for railroad before owned")
 
-        railroads_owned = self.board.count_owned_properties_within_group(
+        railroads_owned: int = self.board.count_owned_properties_within_group(
                 self.owned_by, 
                 self.RAILROAD_PROPERTY_GROUP
             ) 

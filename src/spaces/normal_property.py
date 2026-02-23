@@ -1,5 +1,4 @@
-from board import BoardState
-from property import BaseProperty
+from .property import BaseProperty
 
 class NormalProperty(BaseProperty):
     def __init__(
@@ -10,18 +9,20 @@ class NormalProperty(BaseProperty):
                  mortgage_value: int, 
                  house_cost: int, 
                  rent_costs: list[int], 
-                 board: BoardState
                  ):
         if house_cost <= 0:
             raise ValueError(f"Houses must be worth something silly! You put {price}")        
 
-        super().__init__(name, price, property_group, mortgage_value, rent_costs, board)
+        super().__init__(name, price, property_group, mortgage_value, rent_costs)
         self.property_group = property_group
         self.house_cost = house_cost
         self.house_count = 0
         pass
 
     def add_house(self):
+        if not self.board:
+            raise ValueError("Board not assigned.")
+
         if (self.owned_by and 
             self.board.player_has_monopoly(self.owned_by, self.property_group) and 
             self.owned_by.transact(-self.house_cost)
