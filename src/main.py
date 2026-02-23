@@ -43,7 +43,8 @@ def main():
             state.add_space(Utlities(space['name'], space['price'], space['mortgage_value']))
 
 
-    state.add_player(Player('tristan', 0))
+    state.add_player(Player('tristan', 0, io))
+    state.add_player(Player('maddie', 1, io))
     state.next_turn()
 
 if __name__ == "__main__":

@@ -1,3 +1,9 @@
+from ..auction import Auction
+
+from ..io.base_io import BaseIO
+
+from ..io.io_data_models import ActionInput, ActionItem, ActionRequest
+
 from ..player import Player
 from .space import Space
 
@@ -36,23 +42,36 @@ class BaseProperty(Space):
             raise ValueError("Board not assigned.")
 
         if not self.owned_by:
-            if self.offer_to_buy(player) and player.transact(self.price):
+            if player.can_afford(self.price) and self.offer_to_buy(player.io) and player.transact(-self.price):
                 self.board.award_curr_property()
                 self.owned_by = player
             else:
-                # TODO: add auctions for denied properties
-                raise ValueError("Auctions not ready yet")
+                auc = Auction(self.board.curr_turn)
+                auc.board = self.board
+                winner, cost = auc.run()
+                winner.transact(-cost)
+                self.owned_by = winner
         else:
             curr_rent = self.get_curr_rent()
             if not player.transact(-curr_rent):
                 # TODO: add actions to reconcile not enough funds
                 raise ValueError("User cannot pay rent. Die.")
             self.owned_by.transact(curr_rent)
+            self.board.io.provide_info(f"You just landed on {self.owned_by.name}'s space! You had to pay ${curr_rent}.")
 
-    def offer_to_buy(self, player: Player) -> bool:
+    def offer_to_buy(self, io: BaseIO) -> bool:
         """Ask player if they want to buy. If they cannot afford or they deny, return false"""
-        # TODO: add user prompt for buying properties
-        return True
+
+        req = ActionRequest(available_actions=[
+                ActionItem(action_name="Purchase", description="Purchase the property so that you now own it. Subtracts cost from your balance."),
+                ActionItem(action_name="Auction", description="Allows yourself and other players to compete for the property. Highest payer wins.")
+            ], request=f"You just rolled a {self.board.last_roll} and landed on {self.name} - {self.property_group}, which no one owns yet. It costs ${self.price} What would you like to do?")
+
+        res = io.request_action(req, None)
+
+        if type(res) == ActionInput and res.action_name == "Purchase":
+            return True
+        return False 
     
     def who_owns(self) -> Player | None:
         return self.owned_by
