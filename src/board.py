@@ -1,6 +1,8 @@
 from random import Random
 from typing import Any, Callable, Optional
 
+from .spaces.property import BaseProperty
+
 from .auction import Auction
 
 from .io.io_data_models import ActionInput, ActionItem, ActionRequest, GameStateModel
@@ -13,7 +15,7 @@ class BoardState:
 
     def __init__(self, 
                  property_groups: dict[str, list[int]], 
-                 random_seed: Optional[int]
+                 random_seed: Optional[int] = None
                  ):
 
         self.players: list[Player] = [] 
@@ -24,29 +26,19 @@ class BoardState:
         self.last_roll = -1
         self.doubles = 0 
         self.running = True
+        self.repeat = False
 
     def build_action_request(self) -> ActionRequest:
-        actions = self.get_actions_dict()
         action_items: list[ActionItem]= []
-        for name, meta in actions.items():
-            action_items.append(ActionItem(action_name=name, description=meta['desc'])) # type: ignore
+        curr_player = self.get_curr_player()
+
+        action_items.append(ActionItem(action_name='Roll', description= "Move forward based on dice roll"))
+        if len(curr_player.property_idexes_owned) > 0:
+            action_items.append(ActionItem(action_name='Mortgage', description= 'Manage your properties\' mortgage states'))
+
         req = ActionRequest(request=f"It's your turn, {self.get_curr_player().name}! What would you like to do?\n", available_actions=action_items)
+
         return req
-
-    def get_actions_dict(self) -> dict[str, dict[str, str | Callable[..., Any]]]:
-        return  ({
-            'roll': {
-                'method': self.move_curr_player_by_dice,
-                'desc': "Move forward based on dice roll"
-            },
-            'auction': {
-                'method': self.start_auction,
-                'desc': 'Auction this property to you and other players.'
-            }
-        })
-
-    def run_action(self, name: str):
-        self.get_actions_dict()[name]['method']() # type: ignore
 
     def player_locations(self) -> dict[str, str]:
         ret: dict[str, str] = {}
@@ -85,7 +77,6 @@ class BoardState:
         owned = self.player_properties_owned()
         return GameStateModel(player_locations=player_locations, properties_owned=owned, player_banks=banks, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
 
-
     def next_turn(self):
         while self.running:
             if self.get_curr_player().bankrupt:
@@ -96,7 +87,10 @@ class BoardState:
             curr_player = self.get_curr_player()
             res = curr_player.io.request_action(req, state)
             if type(res) == ActionInput:
-                self.run_action(res.action_name)
+                if res.action_name == 'Roll':
+                    self.move_curr_player_by_dice()
+                elif res.action_name == 'Mortgage':
+                    self.mortgage_properties()
             else:
                 raise ValueError("Expecting ActionInput, got ActionInputInt")
 
@@ -105,7 +99,7 @@ class BoardState:
                 print(f"The winner is {winner.name}!")
                 return
 
-            if self.doubles == 0: 
+            if self.doubles == 0 and not self.repeat: 
                 self.curr_turn = (self.curr_turn + 1) % len(self.players)
             elif self.doubles >= 3:
                 self.get_curr_player().incarcerate()
@@ -138,7 +132,7 @@ class BoardState:
         return combined 
     
     def move_curr_player_by_dice(self):
-        player = self.get_curr_player()
+        player: Player = self.get_curr_player()
         moving_spaces = self.roll_dice()
 
         passed_go = moving_spaces >= len(self.spaces) 
@@ -150,11 +144,11 @@ class BoardState:
         player.set_position(next_space)
         self.spaces[player.curr_index].land(player)
 
-    def award_curr_property(self, player: Optional[Player], cost: Optional[int]):
-        curr_player = player if player else self.players[self.curr_turn]
+    def award_curr_property(self, target_player: Player, cost: int):
+        curr_player = self.get_curr_player()
         if cost:
-            curr_player.transact(-cost)
-        curr_player.property_idexes_owned.add(curr_player.curr_index)
+            target_player.transact(-cost)
+        target_player.property_idexes_owned.add(curr_player.curr_index)
 
     def player_has_monopoly(self, player: Player, group: str) -> bool:
         properties_in_group = self.property_groups[group]
@@ -181,11 +175,17 @@ class BoardState:
     def get_prev_player(self):
         return self.players[(self.curr_turn - 1) % len(self.players)] if self.doubles == 0 else self.get_curr_player()
     
-    def start_auction(self):
-        auc = Auction(self.curr_turn)
-        auc.board = self
-        winner, price = auc.run()
-        self.award_curr_property(winner, price)
+    def start_auction(self, property: BaseProperty | None):
+        curr_property = self.get_curr_space()
+        if type(curr_property) == BaseProperty:
+            property = property if property else curr_property 
+            auc = Auction(self.curr_turn)
+            auc.property = curr_property
+            auc.board = self
+            winner, price = auc.run()
+            self.award_curr_property(winner, price)
+        else: 
+            raise ValueError("Cannot auction on non property space")
 
     def insufficient_funds_flow(self, player: Player, required_amount: int):
         while not player.can_afford(required_amount):
@@ -209,10 +209,37 @@ class BoardState:
                     return
                 else:
                     raise ValueError("Action input not recognized")
+        player.transact(-required_amount)
 
+    def prompt_mortgage_list(self, player: Player) -> BaseProperty:
+        prop_descs: list[ActionItem] = []
+        name_to_prop: dict[str, BaseProperty] = {}
+        for prop_i in player.property_idexes_owned:
+            prop = self.spaces[prop_i]
+            if issubclass(type(prop), BaseProperty):
+                name = f"{prop.name} - {prop.property_group}{': MORTGAGED' if prop.is_mortgaged else ''}" # type: ignore
+                name_to_prop[name] = prop # type: ignore
+                prop_descs.append(ActionItem(action_name=name, description=f"Mortgaging this property will earn you {prop.mortgage_value}")) # type: ignore
 
-    def mortgage_properties(self, player: Player):
+        req = ActionRequest(request="Please choose which of your properties to mortgage or unmortgage", available_actions=prop_descs)
+        res = player.io.request_action(req)
+        if type(res) == ActionInput:
+            return name_to_prop[res.action_name]
+        else:
+            raise ValueError("Expected Action, got Int.")
+
+    def mortgage_properties(self, player: Player | None=None):
+        self.repeat = True
+        player = self.get_curr_player() if not player else player
+        res = self.prompt_mortgage_list(player)
+        if res.toggle_mortage():
+            player.io.provide_info(f"You just {'un' if not res.is_mortgaged else ''}mortgaged {res.name} for ${res.mortgage_value}. You now have ${player.money}.")
+        else:
+            player.io.provide_info(f"Cannot afford to unmortgage {res.name}.")
         pass
 
     def trade(self, player: Player):
         pass
+
+    def get_curr_space(self) -> Space:
+        return self.spaces[self.get_curr_player().curr_index]

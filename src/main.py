@@ -23,7 +23,7 @@ def main():
 
     property_groups: dict[str, list[int]] = {}
     io = CLI()
-    state = BoardState(property_groups, io, None)
+    state = BoardState(property_groups)
 
     for i, space in enumerate(data['board']['spaces']):
         if space['type'] == 'space':

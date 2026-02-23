@@ -9,5 +9,5 @@ class TaxSpace(Space):
 
     def land(self, player: Player):
         if not player.transact(-self.cost):
-            # TODO: Add flow for resolving insufficient funds
+            self.board.insufficient_funds_flow(player, self.cost)
             raise ValueError(f"Cannot pay taxes. IRS killed player {player.name}")

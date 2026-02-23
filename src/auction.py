@@ -12,6 +12,8 @@ class Auction:
         self.auctioning = True
         self.curr_winner = None
         self.players_dropped: set[int] = set()
+        self.property: Any = None 
+
 
     def run(self) -> tuple[Player, int]:
         while not self.is_over():
@@ -21,7 +23,7 @@ class Auction:
                 self.curr_player_index += 1
                 continue
 
-            req = ActionRequest(request=f"You're currently in an auction, {curr_player.name}. Current winner is {self.curr_winner.name if self.curr_winner else 'no one'}. Highest price is ${self.curr_price}. You currently have {curr_player.money}. How much do you bid on top of this? Enter <= 0 or over ${curr_player.money} to exit the auction", 
+            req = ActionRequest(request=f"You're currently in an auction for the property {self.property.name} - {self.property.property_group}, {curr_player.name}. Current winner is {self.curr_winner.name if self.curr_winner else 'no one'}. Highest price is ${self.curr_price}. You currently have ${curr_player.money}. How much do you bid on top of this? Enter <= 0 or over ${curr_player.money - self.curr_price} to exit the auction", 
                         available_actions=[], 
                         input_type='Int')
 
@@ -38,7 +40,7 @@ class Auction:
 
         if not self.curr_winner:
             raise ValueError("Auction ended with no winner?")
-        
+        print(f"AUCTION RETURNED PRICE {self.curr_price}") 
         return self.curr_winner, self.curr_price
 
     def get_curr_player(self) -> Player:

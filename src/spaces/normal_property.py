@@ -40,3 +40,4 @@ class NormalProperty(BaseProperty):
     
     def get_curr_rent(self) -> int:
         return self.rent_costs[self.house_count]
+    

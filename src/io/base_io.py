@@ -15,11 +15,7 @@ class BaseIO:
 
     def game_state_message(self, game_state: GameStateModel) -> str:
         message = "Here is the current game state:\n\n"
-        message += "Locations: \n"
-        for name, location in game_state.player_locations.items():
-            message += f"{name} is currently located on {location}\n"
 
-        message += "\n"
         for player_named, owned_properties in game_state.properties_owned.items():
             if len(owned_properties) == 0:
                 continue
@@ -32,6 +28,11 @@ class BaseIO:
         message += "Player bank accounts:\n"
         for name, amount in game_state.player_banks.items():
             message += f"{name}: ${amount}\n"
+
+        message += "\n"
+        message += "Locations: \n"
+        for name, location in game_state.player_locations.items():
+            message += f"{name} is currently located on {location}\n"
 
         message += "\n"
         if game_state.last_roll > 0:
