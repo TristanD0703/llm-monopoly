@@ -12,6 +12,12 @@ class ActionInputInt(BaseModel):
     number: int = Field(..., description="The number you want to respond with") 
     explanation: str = Field(..., description="A detailed explanation to why you chose this action.")
 
+class ActionInputTrade(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(..., description="The reason why you are making this trade proposal. Try to convice the other player that this is advantageous to both of you.")
+    amount: int = Field(..., description="The amount of money you propose to include in this trade deal. Can be $0 or more.")
+    properties: list[int] = Field(..., description="The associated numbers of each property you wish to trade with the other player.")
+
 class ActionItem(BaseModel):
     model_config = ConfigDict(extra="forbid")
     action_name: str = Field(..., description="The name of the action the user should take. When responding, the action_name must match EXACTLY with one of these")
@@ -21,7 +27,7 @@ class ActionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     available_actions: list[ActionItem] = Field(..., description="The actions available to the user")
     request: str = Field(..., description="Defines context to which the actions will be doing")
-    input_type: Literal['Action', 'Int'] = 'Action'
+    input_type: Literal['Action', 'Int', 'Trade'] = 'Action'
 
 class GameStateModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
