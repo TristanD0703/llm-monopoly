@@ -29,7 +29,7 @@ class CLI(BaseIO):
         print(options.request + "\nReceive money amount:")
         recv = self.get_optional_int()
 
-        print(f"Please choose the properties you want to give to the other player. Enter a comma-separated list of numbers corresponding to your choices. Type enter to skip")
+        print(f"Please choose the properties you want to give to {to_player_name}. Enter a comma-separated list of numbers corresponding to your choices. Type enter to skip")
         from_player_props = game_state.properties_owned[from_player_name]
         giving: list[str] = []
         if len(from_player_props) > 0:
@@ -38,7 +38,7 @@ class CLI(BaseIO):
 
             giving = self.get_list(from_player_props)
             
-        print(f"Please choose the properties you want to receive from the other player. Enter a comma-separated list of numbers corresponding to your choices. Type enter to skip")
+        print(f"Please choose the properties you want to receive from {to_player_name}. Enter a comma-separated list of numbers corresponding to your choices. Type enter to skip")
         to_player_props = game_state.properties_owned[to_player_name]
         receiving: list[str] = []
         if len(to_player_props) > 0:

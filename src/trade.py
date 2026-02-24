@@ -40,11 +40,10 @@ class Trade:
             elif res.action_name == "Counteroffer":
                 self.curr_turn = self.get_next()
                 details = self.prompt_trade_details()
-                self.players[self.curr_turn] = curr_player, True
-                self.players[self.get_next()] = other_player, False
             else:
                 return
             self.counter_times += 1
+        self.players[0][0].io.provide_info("Trade cancelled due to too many counteroffers.")
 
     def is_deal_end(self) -> bool:
         all_accepted = True
@@ -53,7 +52,7 @@ class Trade:
                 all_accepted = False
                 break
         
-        return all_accepted and self.counter_times >= self.max_counteroffers
+        return all_accepted or self.counter_times >= self.max_counteroffers
     
     def get_next(self) -> int:
         return (self.curr_turn + 1) % 2
@@ -70,4 +69,12 @@ class Trade:
 
         curr_player.transact(deal.amount - deal.amount_receiving)
         other_player.transact(deal.amount_receiving - deal.amount)
-        pass
+
+        recv = list(map(curr_player.name_to_property_index, deal.properties_recieving))
+        give = list(map(other_player.name_to_property_index, deal.properties_giving))
+
+        other_player.add_properties(recv)
+        other_player.remove_properties(give)
+
+        curr_player.add_properties(give)
+        curr_player.remove_properties(recv)

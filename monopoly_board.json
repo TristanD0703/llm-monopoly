@@ -4,12 +4,10 @@
         "spaces": [
             {
                 "type": "space",
-                "position": 0,
                 "name": "Go"
             },
             {
                 "type": "property",
-                "position": 1,
                 "name": "Mediterranean Avenue",
                 "price": 60,
                 "property_group": "brown",
@@ -18,13 +16,11 @@
                 "rent_costs": [2, 10, 30, 90, 160, 250]
             },
             {
-                "type": "space",
-                "position": 2,
+                "type": "community_chest",
                 "name": "Community Chest"
             },
             {
                 "type": "property",
-                "position": 3,
                 "name": "Baltic Avenue",
                 "price": 60,
                 "property_group": "brown",
@@ -34,13 +30,11 @@
             },
             {
                 "type": "tax",
-                "position": 4,
                 "name": "Income Tax",
                 "cost": 200
             },
             {
                 "type": "railroad",
-                "position": 5,
                 "name": "Reading Railroad",
                 "price": 200,
                 "mortgage_value": 100,
@@ -48,7 +42,6 @@
             },
             {
                 "type": "property",
-                "position": 6,
                 "name": "Oriental Avenue",
                 "price": 100,
                 "property_group": "light_blue",
@@ -57,13 +50,11 @@
                 "rent_costs": [6, 30, 90, 270, 400, 550]
             },
             {
-                "type": "space",
-                "position": 7,
+                "type": "chance",
                 "name": "Chance"
             },
             {
                 "type": "property",
-                "position": 8,
                 "name": "Vermont Avenue",
                 "price": 100,
                 "property_group": "light_blue",
@@ -73,7 +64,6 @@
             },
             {
                 "type": "property",
-                "position": 9,
                 "name": "Connecticut Avenue",
                 "price": 120,
                 "property_group": "light_blue",
@@ -83,12 +73,10 @@
             },
             {
                 "type": "space",
-                "position": 10,
                 "name": "Jail"
             },
             {
                 "type": "property",
-                "position": 11,
                 "name": "St. Charles Place",
                 "price": 140,
                 "property_group": "pink",
@@ -98,7 +86,6 @@
             },
             {
                 "type": "utilities",
-                "position": 12,
                 "name": "Electric Company",
                 "price": 150,
                 "mortgage_value": 75,
@@ -106,7 +93,6 @@
             },
             {
                 "type": "property",
-                "position": 13,
                 "name": "States Avenue",
                 "price": 140,
                 "property_group": "pink",
@@ -116,7 +102,6 @@
             },
             {
                 "type": "property",
-                "position": 14,
                 "name": "Virginia Avenue",
                 "price": 160,
                 "property_group": "pink",
@@ -126,7 +111,6 @@
             },
             {
                 "type": "railroad",
-                "position": 15,
                 "name": "Pennsylvania Railroad",
                 "price": 200,
                 "mortgage_value": 100,
@@ -134,7 +118,6 @@
             },
             {
                 "type": "property",
-                "position": 16,
                 "name": "St. James Place",
                 "price": 180,
                 "property_group": "orange",
@@ -143,13 +126,11 @@
                 "rent_costs": [14, 70, 200, 550, 750, 950]
             },
             {
-                "type": "space",
-                "position": 17,
+                "type": "community_chest",
                 "name": "Community Chest"
             },
             {
                 "type": "property",
-                "position": 18,
                 "name": "Tennessee Avenue",
                 "price": 180,
                 "property_group": "orange",
@@ -159,7 +140,6 @@
             },
             {
                 "type": "property",
-                "position": 19,
                 "name": "New York Avenue",
                 "price": 200,
                 "property_group": "orange",
@@ -169,12 +149,10 @@
             },
             {
                 "type": "space",
-                "position": 20,
                 "name": "Free Parking"
             },
             {
                 "type": "property",
-                "position": 21,
                 "name": "Kentucky Avenue",
                 "price": 220,
                 "property_group": "red",
@@ -183,13 +161,11 @@
                 "rent_costs": [18, 90, 250, 700, 875, 1050]
             },
             {
-                "type": "space",
-                "position": 22,
+                "type": "chance",
                 "name": "Chance"
             },
             {
                 "type": "property",
-                "position": 23,
                 "name": "Indiana Avenue",
                 "price": 220,
                 "property_group": "red",
@@ -199,7 +175,6 @@
             },
             {
                 "type": "property",
-                "position": 24,
                 "name": "Illinois Avenue",
                 "price": 240,
                 "property_group": "red",
@@ -209,7 +184,6 @@
             },
             {
                 "type": "railroad",
-                "position": 25,
                 "name": "B&O Railroad",
                 "price": 200,
                 "mortgage_value": 100,
@@ -217,7 +191,6 @@
             },
             {
                 "type": "property",
-                "position": 26,
                 "name": "Atlantic Avenue",
                 "price": 260,
                 "property_group": "yellow",
@@ -227,7 +200,6 @@
             },
             {
                 "type": "property",
-                "position": 27,
                 "name": "Ventnor Avenue",
                 "price": 260,
                 "property_group": "yellow",
@@ -237,7 +209,6 @@
             },
             {
                 "type": "utilities",
-                "position": 28,
                 "name": "Water Works",
                 "price": 150,
                 "mortgage_value": 75,
@@ -245,7 +216,6 @@
             },
             {
                 "type": "property",
-                "position": 29,
                 "name": "Marvin Gardens",
                 "price": 280,
                 "property_group": "yellow",
@@ -255,12 +225,10 @@
             },
             {
                 "type": "jail",
-                "position": 30,
                 "name": "Go to Jail"
             },
             {
                 "type": "property",
-                "position": 31,
                 "name": "Pacific Avenue",
                 "price": 300,
                 "property_group": "green",
@@ -270,7 +238,6 @@
             },
             {
                 "type": "property",
-                "position": 32,
                 "name": "North Carolina Avenue",
                 "price": 300,
                 "property_group": "green",
@@ -279,13 +246,11 @@
                 "rent_costs": [26, 130, 390, 900, 1100, 1275]
             },
             {
-                "type": "space",
-                "position": 33,
+                "type": "community_chest",
                 "name": "Community Chest"
             },
             {
                 "type": "property",
-                "position": 34,
                 "name": "Pennsylvania Avenue",
                 "price": 320,
                 "property_group": "green",
@@ -295,20 +260,17 @@
             },
             {
                 "type": "railroad",
-                "position": 35,
                 "name": "Short Line",
                 "price": 200,
                 "mortgage_value": 100,
                 "rent_costs": [25, 50, 100, 200]
             },
             {
-                "type": "space",
-                "position": 36,
+                "type": "chance",
                 "name": "Chance"
             },
             {
                 "type": "property",
-                "position": 37,
                 "name": "Park Place",
                 "price": 350,
                 "property_group": "dark_blue",
@@ -318,13 +280,11 @@
             },
             {
                 "type": "tax",
-                "position": 38,
                 "name": "Luxury Tax",
                 "cost": 100
             },
             {
                 "type": "property",
-                "position": 39,
                 "name": "The Boardwalk",
                 "price": 400,
                 "property_group": "dark_blue",

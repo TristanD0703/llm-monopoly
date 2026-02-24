@@ -166,6 +166,12 @@ class BoardState:
         space.board = self
         if space.name == 'Jail':
             self.jail_index = len(self.spaces)
+
+        if hasattr(space, 'property_group'):
+            prop_grp = getattr(space, 'property_group') 
+            if prop_grp not in self.property_groups:
+                self.property_groups[prop_grp] = []
+            self.property_groups[prop_grp].append(len(self.spaces))
         self.spaces.append(space)
 
     def add_player(self, player: Player):

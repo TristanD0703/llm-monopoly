@@ -37,7 +37,6 @@ class Auction:
 
         if not self.curr_winner:
             raise ValueError("Auction ended with no winner?")
-        print(f"AUCTION RETURNED PRICE {self.curr_price}") 
         return self.curr_winner, self.curr_price
 
     def get_curr_player(self) -> Player:
