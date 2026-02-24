@@ -2,7 +2,7 @@ from ..auction import Auction
 
 from ..io.base_io import BaseIO
 
-from ..io.io_data_models import ActionInput, ActionItem, ActionRequest
+from ..io.io_data_models import ActionItem, ActionRequest
 
 from ..player import Player
 from .space import Space
@@ -69,7 +69,7 @@ class BaseProperty(Space):
 
         res = io.request_action(req, None)
 
-        if type(res) == ActionInput and res.action_name == "Purchase":
+        if res.action_name == "Purchase":
             return True
         return False 
     

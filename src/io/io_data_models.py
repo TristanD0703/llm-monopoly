@@ -16,7 +16,9 @@ class ActionInputTrade(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: str = Field(..., description="The reason why you are making this trade proposal. Try to convice the other player that this is advantageous to both of you.")
     amount: int = Field(..., description="The amount of money you propose to include in this trade deal. Can be $0 or more.")
-    properties: list[int] = Field(..., description="The associated numbers of each property you wish to trade with the other player.")
+    amount_receiving: int = Field(..., description="The amount of money you propose to receive in this trade deal. Can be $0 or more.")
+    properties_giving: list[str] = Field(..., description="The names of each property you wish to give to the other player through this trade.")
+    properties_recieving: list[str] = Field(..., description="The names of each property you wish to recieve from the other player through this trade.")
 
 class ActionItem(BaseModel):
     model_config = ConfigDict(extra="forbid")

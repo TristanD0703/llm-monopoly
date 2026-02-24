@@ -1,17 +1,49 @@
 
 from typing import Optional
-from .io_data_models import ActionInput, ActionInputInt, ActionRequest, GameStateModel
+from .io_data_models import ActionInput, ActionInputInt, ActionInputTrade, ActionRequest, GameStateModel
 
 
 class BaseIO:
     def __init__(self, verbose: bool=False):
         self.verbose = verbose
 
-    def request_action(self, options: ActionRequest, game_state: Optional[GameStateModel]=None) -> ActionInput | ActionInputInt:
+    def request_action(self, options: ActionRequest, game_state: Optional[GameStateModel]=None) -> ActionInput :
         return ActionInput(action_name="Nothing", explanation="I do nothing.")
     
+    def request_action_int(self, options: ActionRequest, game_state: Optional[GameStateModel]=None) -> ActionInputInt:
+        raise NotImplementedError("request_action_int not implemented")
+    
+    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> ActionInputTrade:
+        raise NotImplementedError("request_trade_details not implemented")
+
+
     def provide_info(self, message: str):
         pass
+
+    def trade_details_message(self, trade: ActionInputTrade) -> str:
+        message = ""
+
+        if trade.amount > 0:
+            message += f"Money you will receive: ${trade.amount}\n"
+
+        if trade.amount_receiving > 0: 
+            message += f"\nMoney you will give: ${trade.amount_receiving}\n"
+
+        if len(trade.properties_giving) > 0:
+            message += "Properties they will give you:\n"
+            for prop in trade.properties_giving:
+                message += f"{prop}\n"
+            message += '\n'
+
+        if len(trade.properties_recieving) > 0:
+            message += "\nProperties they want from you:\n"
+            for prop in trade.properties_recieving:
+                message += f"{prop}\n"
+            message += '\n'
+
+        if len(trade.reason) > 0:
+            message += f"Their reasoning behind the trade: {trade.reason}"
+        return message
 
     def game_state_message(self, game_state: GameStateModel) -> str:
         message = "Here is the current game state:\n\n"

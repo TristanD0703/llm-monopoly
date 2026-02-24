@@ -1,6 +1,6 @@
 from typing import Any
 
-from .io.io_data_models import ActionInputInt, ActionRequest
+from .io.io_data_models import ActionRequest
 from .player import Player
 
 
@@ -27,15 +27,12 @@ class Auction:
                         available_actions=[], 
                         input_type='Int')
 
-            res = curr_player.io.request_action(req)
-            if type(res) == ActionInputInt:
-                if res.number > 0 and curr_player.can_afford(res.number + self.curr_price):
-                    self.curr_price += res.number 
-                    self.curr_winner = curr_player
-                else:
-                    self.players_dropped.add(self.curr_player_index)
+            res = curr_player.io.request_action_int(req)
+            if res.number > 0 and curr_player.can_afford(res.number + self.curr_price):
+                self.curr_price += res.number 
+                self.curr_winner = curr_player
             else:
-                raise ValueError("Input must be integer!")
+                self.players_dropped.add(self.curr_player_index)
             self.curr_player_index += 1
 
         if not self.curr_winner:

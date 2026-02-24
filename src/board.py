@@ -1,11 +1,10 @@
 from random import Random
 from typing import Optional
 
+from .trade import Trade
 from .spaces.property import BaseProperty
-
 from .auction import Auction
-
-from .io.io_data_models import ActionInput, ActionItem, ActionRequest, GameStateModel
+from .io.io_data_models import ActionItem, ActionRequest, GameStateModel
 from .player import Player
 from .spaces.space import Space
 
@@ -33,6 +32,7 @@ class BoardState:
         curr_player = self.get_curr_player()
 
         action_items.append(ActionItem(action_name='Roll', description= "Move forward based on dice roll"))
+        action_items.append(ActionItem(action_name='Trade', description= "Enter a trade discussion with another player. You can exchange properties and/or money."))
         if len(curr_player.property_idexes_owned) > 0:
             action_items.append(ActionItem(action_name='Mortgage', description= 'Manage your properties\' mortgage states'))
 
@@ -86,13 +86,13 @@ class BoardState:
             req = self.build_action_request()
             curr_player = self.get_curr_player()
             res = curr_player.io.request_action(req, state)
-            if type(res) == ActionInput:
-                if res.action_name == 'Roll':
-                    self.move_curr_player_by_dice()
-                elif res.action_name == 'Mortgage':
-                    self.mortgage_properties()
-            else:
-                raise ValueError("Expecting ActionInput, got ActionInputInt")
+
+            if res.action_name == 'Roll':
+                self.move_curr_player_by_dice()
+            elif res.action_name == 'Mortgage':
+                self.mortgage_properties()
+            elif res.action_name == 'Trade':
+                self.trade()
 
             winner = self.check_winner()
             if winner:
@@ -199,16 +199,16 @@ class BoardState:
                                 available_actions=actions)
             res = player.io.request_action(req, game_state=self.build_game_state()) 
 
-            if type(res) == ActionInput:
-                if res.action_name == "Mortgage properties":
-                    self.mortgage_properties(player)
-                elif res.action_name == "Trade":
-                    self.trade(player)
-                elif res.action_name == "Declare Bankruptcy":
-                    player.bankrupt = True
-                    return
-                else:
-                    raise ValueError("Action input not recognized")
+            if res.action_name == "Mortgage properties":
+                self.mortgage_properties(player)
+            elif res.action_name == "Trade":
+                self.trade()
+            elif res.action_name == "Declare Bankruptcy":
+                player.bankrupt = True
+                return
+            else:
+                raise ValueError("Action input not recognized")
+
         player.transact(-required_amount)
 
     def prompt_mortgage_list(self, player: Player) -> BaseProperty:
@@ -223,10 +223,7 @@ class BoardState:
 
         req = ActionRequest(request="Please choose which of your properties to mortgage or unmortgage", available_actions=prop_descs)
         res = player.io.request_action(req)
-        if type(res) == ActionInput:
-            return name_to_prop[res.action_name]
-        else:
-            raise ValueError("Expected Action, got Int.")
+        return name_to_prop[res.action_name]
 
     def mortgage_properties(self, player: Player | None=None):
         self.repeat = True
@@ -238,7 +235,25 @@ class BoardState:
             player.io.provide_info(f"Cannot afford to unmortgage {res.name}.")
         pass
 
-    def trade(self, player: Player):
+    def prompt_target_player_trade(self) -> Player:
+        name_actions: list[ActionItem] = []
+        name_player: dict[str, Player] = {}
+        for p in self.players:
+            if p.name == self.get_curr_player().name:
+                continue
+
+            name_actions.append(ActionItem(action_name=p.name, description=""))
+            name_player[p.name] = p
+        req = ActionRequest(request="Who would you like to trade with?", available_actions=name_actions)
+        res = self.get_curr_player().io.request_action(req)
+
+        return name_player[res.action_name]
+
+    def trade(self):
+        self.repeat = True
+        target = self.prompt_target_player_trade()
+        t = Trade(self.get_curr_player(), target, self.build_game_state())
+        t.begin_trade()
         pass
 
     def get_curr_space(self) -> Space:
