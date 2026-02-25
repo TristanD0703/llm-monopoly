@@ -18,6 +18,8 @@ class Auction:
     def run(self) -> tuple[Player, int]:
         while not self.is_over():
             curr_player = self.get_curr_player()
+            if not self.curr_winner and curr_player.money > 0:
+                self.curr_winner = curr_player
 
             if self.curr_player_index in self.players_dropped or not curr_player.can_afford(self.curr_price):
                 self.curr_player_index += 1

@@ -5,13 +5,13 @@ class Trade:
     def __init__(self, player: Player, target_player: Player, game_state: GameStateModel, max_counteroffers: int=10):
         self.players: list[tuple[Player, bool]] = [(player, True), (target_player, False)]
         self.game_state = game_state
-        self.curr_turn = 1
+        self.curr_turn = 0
         self.counter_times = 0
         self.max_counteroffers = max_counteroffers
 
     def prompt_trade_details(self) -> ActionInputTrade:
         req = ActionRequest(request="Please enter the details of your trade deal", available_actions=[])
-        return self.get_curr_player().io.request_trade_details(req, self.game_state, self.get_other_player().name, self.get_curr_player().name)
+        return self.get_curr_player().io.request_trade_details(req, self.game_state, self.get_curr_player().name, self.get_other_player().name)
 
     def prompt_receive_offer(self, from_player: Player, to_player: Player, details: ActionInputTrade) -> ActionInput:
         mes = from_player.io.trade_details_message(details)
@@ -26,7 +26,7 @@ class Trade:
 
     def begin_trade(self):
         details = self.prompt_trade_details()
-
+        self.curr_turn += 1
         while not self.is_deal_end():
             curr_player, _ = self.players[self.curr_turn]
             other_player, _ = self.players[self.get_next()]
@@ -40,9 +40,10 @@ class Trade:
             elif res.action_name == "Counteroffer":
                 self.curr_turn = self.get_next()
                 details = self.prompt_trade_details()
-            else:
+            elif res.action_name == "Counteroffer":
                 return
             self.counter_times += 1
+            self.curr_turn = self.get_next()
         self.players[0][0].io.provide_info("Trade cancelled due to too many counteroffers.")
 
     def is_deal_end(self) -> bool:
@@ -64,17 +65,25 @@ class Trade:
         return self.players[self.get_next()][0]
 
     def enact_deal(self, deal: ActionInputTrade):
-        curr_player, _ = self.players[self.curr_turn]
-        other_player, _ = self.players[self.get_next()]
+        
+        curr_player = self.get_curr_player() 
+        other_player = self.get_other_player() 
 
         curr_player.transact(deal.amount - deal.amount_receiving)
         other_player.transact(deal.amount_receiving - deal.amount)
 
-        recv = list(map(curr_player.name_to_property_index, deal.properties_recieving))
-        give = list(map(other_player.name_to_property_index, deal.properties_giving))
+        recv = list(map(other_player.name_to_property_index, deal.properties_recieving))
+        give = list(map(curr_player.name_to_property_index, deal.properties_giving))
 
-        other_player.add_properties(recv)
+
+        print(f"giving: {deal.properties_giving}")
+        print(f"giving player: {give}")
+        print(f"receiving: {deal.properties_recieving}")
+        print(f"receiving player: {recv}")
+        print(f"curr_player: {curr_player.property_idexes_owned}")
+        print(f"other_player: {other_player.property_idexes_owned}")
         other_player.remove_properties(give)
+        other_player.add_properties(recv)
 
-        curr_player.add_properties(give)
         curr_player.remove_properties(recv)
+        curr_player.add_properties(give)

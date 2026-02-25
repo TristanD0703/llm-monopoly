@@ -35,7 +35,7 @@ class CLI(BaseIO):
             for i, prop in enumerate(from_player_props):
                 print(f"{i+1}. {prop}")
 
-            giving = self.get_list(from_player_props)
+            giving = list(map(lambda x: x.split(" - ")[0], self.get_list(from_player_props)))
             
         print(f"Please choose the properties you want to receive from {to_player_name}. Enter a comma-separated list of numbers corresponding to your choices. Type enter to skip")
         to_player_props = game_state.properties_owned[to_player_name]
@@ -44,7 +44,7 @@ class CLI(BaseIO):
             for i, prop in enumerate(to_player_props):
                 print(f"{i+1}. {prop}")
 
-            receiving = self.get_list(to_player_props)
+            receiving = list(map(lambda x: x.split(" - ")[0], self.get_list(to_player_props)))
         
         return ActionInputTrade(reason="", amount=give.number if give else 0, amount_receiving=recv.number if recv else 0, properties_giving=giving, properties_recieving=receiving)
 
