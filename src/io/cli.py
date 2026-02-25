@@ -22,7 +22,6 @@ class CLI(BaseIO):
         return self.get_action_int()
 
     def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> ActionInputTrade:
-        print(from_player_name, to_player_name)
         print(options.request + "\nGive money amount:")
         give = self.get_optional_int()
 

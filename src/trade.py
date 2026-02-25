@@ -20,7 +20,7 @@ class Trade:
             ActionItem(action_name="Counteroffer", description="Make another offer to the other player"),
             ActionItem(action_name="Decline", description="Stop the trading process.")
         ]
-        req = ActionRequest(request=f"You received an offer from {from_player.name}! Here are the details:\n{mes}\nWhat will you do?", available_actions=actions)
+        req = ActionRequest(request=f"You received an offer from {to_player.name}! Here are the details:\n{mes}\nWhat will you do?", available_actions=actions)
 
         return to_player.io.request_action(req, self.game_state)
 

@@ -1,6 +1,8 @@
 from random import Random
 from typing import Optional
 
+from .spaces.normal_property import NormalProperty
+
 from .trade import Trade
 from .spaces.property import BaseProperty
 from .auction import Auction
@@ -35,7 +37,8 @@ class BoardState:
         action_items.append(ActionItem(action_name='Trade', description= "Enter a trade discussion with another player. You can exchange properties and/or money."))
         if len(curr_player.property_idexes_owned) > 0:
             action_items.append(ActionItem(action_name='Mortgage', description= 'Manage your properties\' mortgage states'))
-
+            if self.player_monopolies(self.get_curr_player()):
+                action_items.append(ActionItem(action_name="Manage houses", description="Buy or sell houses on properties within a monopoly"))
 
         req = ActionRequest(request=f"It's your turn, {self.get_curr_player().name}! What would you like to do?\n", available_actions=action_items)
 
@@ -66,8 +69,11 @@ class BoardState:
         for player in self.players:
             owned_list: list[str] = []
             for index in player.property_idexes_owned:
-                prop = self.spaces[index].name
-                owned_list.append(prop)
+                prop = self.spaces[index]
+                res = prop.name
+                if hasattr(prop, "property_group"):
+                    res += f" - {getattr(prop, 'property_group')}"
+                owned_list.append(res)
             ret[player.name] = owned_list
 
         return ret
@@ -94,6 +100,8 @@ class BoardState:
                 self.mortgage_properties()
             elif res.action_name == 'Trade':
                 self.trade()
+            elif res.action_name == "Manage houses":
+                self.manage_houses()
 
             winner = self.check_winner()
             if winner:
@@ -269,3 +277,44 @@ class BoardState:
 
     def get_curr_space(self) -> Space:
         return self.spaces[self.get_curr_player().curr_index]
+
+    def prompt_property_houses(self, props: list[Space]) -> NormalProperty:
+        actions: list[ActionItem] = []
+        for p in props:
+            if hasattr(p, 'house_count'):
+                count = getattr(p, 'house_count') 
+                actions.append(ActionItem(action_name=p.name, description=f"Currently has {count} houses")) 
+
+        req = ActionRequest(request="Choose a property to buy houses for:", available_actions=actions)
+        res = self.get_curr_player().io.request_action(req)
+        
+        for p in props:
+            if p.name == res.action_name:
+                return p # type: ignore
+        raise ValueError("request_action returned an invalid option")
+
+
+    def manage_houses(self):
+        self.repeat = True
+        curr_player = self.get_curr_player()
+        groups = self.player_monopolies(curr_player)
+
+        monopoly_properties: list[Space]= []
+        for g in groups:
+            monopoly_properties.extend(list(map(lambda x: self.spaces[x], self.property_groups[g])))
+
+        chosen = self.prompt_property_houses(monopoly_properties)
+        count = curr_player.io.request_action_int(options=ActionRequest(request="How many houses do you wish to purchase/sell?", available_actions=[]))
+        method = curr_player.io.request_action(ActionRequest(
+            available_actions=[ActionItem(action_name="Buy", description=""), ActionItem(action_name="Sell", description="")],
+            request="Buy or sell?"
+        ))
+
+        if count.number < 0:
+            return
+
+        for _ in range(count.number):
+            if method.action_name == "Buy" and not chosen.add_house():
+                curr_player.io.provide_info("Could not buy house. Could not afford.")
+            elif not chosen.sell_house():
+                curr_player.io.provide_info("Could not sell house. No houses to sell!")
