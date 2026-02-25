@@ -36,6 +36,7 @@ class BoardState:
         if len(curr_player.property_idexes_owned) > 0:
             action_items.append(ActionItem(action_name='Mortgage', description= 'Manage your properties\' mortgage states'))
 
+
         req = ActionRequest(request=f"It's your turn, {self.get_curr_player().name}! What would you like to do?\n", available_actions=action_items)
 
         return req
@@ -102,9 +103,9 @@ class BoardState:
             if self.doubles == 0 and not self.repeat: 
                 self.curr_turn = (self.curr_turn + 1) % len(self.players)
             elif self.doubles >= 3:
-                self.get_curr_player().incarcerate()
+                curr_player.incarcerate()
                 self.doubles = 0
-
+                
     def check_winner(self) -> Player | None:
         non_bankrupt = None 
         count_bankrupt = 0
@@ -125,6 +126,7 @@ class BoardState:
 
         if roll == roll2:
             self.doubles += 1  
+            self.get_curr_player().is_in_jail = False
         else:
             self.doubles = 0
 
@@ -150,16 +152,19 @@ class BoardState:
             target_player.transact(-cost)
         target_player.property_idexes_owned.add(curr_player.curr_index)
 
-    def player_has_monopoly(self, player: Player, group: str) -> bool:
-        properties_in_group = self.property_groups[group]
-        return  self.count_owned_properties_within_group(player, group) == len(properties_in_group)
+    def player_monopolies(self, player: Player) -> set[str]:
+        monopoly_names: set[str]= set() 
+        for name, props in self.property_groups.items():
+            if self.count_owned_properties_within_group(player, name) == len(props):
+                monopoly_names.add(name)
+        return monopoly_names
     
     def count_owned_properties_within_group(self, player: Player, group: str):
         owned_properties = player.property_idexes_owned
         properties_in_group = self.property_groups[group]
         return len(owned_properties.intersection(properties_in_group))
     
-    def get_curr_player(self):
+    def get_curr_player(self) -> Player:
         return self.players[self.curr_turn]
     
     def add_space(self, space: Space):

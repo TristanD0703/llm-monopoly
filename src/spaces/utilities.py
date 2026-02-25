@@ -18,7 +18,7 @@ class Utlities(BaseProperty):
             raise ValueError("Cannot get utility rent if not owned")
 
         multiplier = 4
-        if self.board.player_has_monopoly(self.owned_by, self.UTILITY_PROPERTY_GROUP):
+        if self.name in self.board.player_monopolies(self.owned_by, self.property_group):
             multiplier = 10
 
         return self.board.last_roll * multiplier

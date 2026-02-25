@@ -24,7 +24,7 @@ class NormalProperty(BaseProperty):
             raise ValueError("Board not assigned.")
 
         if (self.owned_by and 
-            self.board.player_has_monopoly(self.owned_by, self.property_group) and 
+            self.name in self.board.player_monopolies(self.owned_by, self.property_group) and 
             self.owned_by.transact(-self.house_cost)
             ):
             self.house_count += 1
