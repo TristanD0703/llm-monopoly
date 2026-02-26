@@ -6,7 +6,7 @@ import argparse
 from .io.cli import CLI
 from .player import Player
 from .spaces.card import Card
-from .spaces.utilities import Utlities
+from .spaces.utilities import Utilities
 from .spaces.jail import Jail
 from .spaces.normal_property import NormalProperty
 from .spaces.railroad import Railroad
@@ -39,7 +39,7 @@ def main():
         elif space['type'] == 'jail':
             state.add_space(Jail('Jail'))
         elif space['type'] == 'utilities':
-            state.add_space(Utlities(space['name'], space['price'], space['mortgage_value']))
+            state.add_space(Utilities(space['name'], space['price'], space['mortgage_value']))
         elif space['type'] == 'community_chest' or space['type'] == 'chance':
             state.add_space(Card(space['name'], state.random))
 

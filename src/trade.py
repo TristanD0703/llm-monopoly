@@ -11,16 +11,24 @@ class Trade:
 
     def prompt_trade_details(self) -> ActionInputTrade:
         req = ActionRequest(request="Please enter the details of your trade deal", available_actions=[])
-        return self.get_curr_player().io.request_trade_details(req, self.game_state, self.get_curr_player().name, self.get_other_player().name)
+        curr_player = self.get_curr_player() 
+        curr_io = curr_player.io
+        other_player = self.get_other_player()
+        res = curr_io.request_trade_details(req, self.game_state, curr_player.name, other_player.name)
 
-    def prompt_receive_offer(self, from_player: Player, to_player: Player, details: ActionInputTrade) -> ActionInput:
-        mes = from_player.io.trade_details_message(details)
+        while res.amount > curr_player.money or res.amount_receiving > other_player.money:
+            curr_player.io.provide_info("Players cannot afford to trade that amount of money.")
+            res = curr_io.request_trade_details(req, self.game_state, curr_player.name, other_player.name)
+        return res
+
+    def prompt_receive_offer(self, to_player: Player, from_player: Player, details: ActionInputTrade) -> ActionInput:
+        mes = to_player.io.trade_details_message(details)
         actions: list[ActionItem] = [
             ActionItem(action_name="Accept", description="Accepts the trade and enacts all the proposed deals"),
             ActionItem(action_name="Counteroffer", description="Make another offer to the other player"),
             ActionItem(action_name="Decline", description="Stop the trading process.")
         ]
-        req = ActionRequest(request=f"You received an offer from {to_player.name}! Here are the details:\n{mes}\nWhat will you do?", available_actions=actions)
+        req = ActionRequest(request=f"You received an offer from {from_player.name}! Here are the details:\n{mes}\nWhat will you do?", available_actions=actions)
 
         return to_player.io.request_action(req, self.game_state)
 
@@ -32,7 +40,6 @@ class Trade:
             other_player, _ = self.players[self.get_next()]
 
             res = self.prompt_receive_offer(curr_player, other_player, details)
-
             if res.action_name == "Accept":
                 self.enact_deal(details)
                 self.players[self.curr_turn] = curr_player, True
@@ -41,6 +48,7 @@ class Trade:
                 details = self.prompt_trade_details()
             elif res.action_name == "Decline":
                 return
+
             self.counter_times += 1
             self.curr_turn = self.get_next()
         self.players[0][0].io.provide_info("Trade cancelled due to too many counteroffers.")
@@ -64,7 +72,6 @@ class Trade:
         return self.players[self.get_next()][0]
 
     def enact_deal(self, deal: ActionInputTrade):
-        
         other_player = self.get_curr_player() 
         curr_player = self.get_other_player() 
 
@@ -74,18 +81,6 @@ class Trade:
         recv = list(map(other_player.name_to_property_index, deal.properties_recieving))
         give = list(map(curr_player.name_to_property_index, deal.properties_giving))
 
-
-        print(f"giving: {deal.properties_giving}")
-        print(f"giving player: {curr_player.name} {give}")
-        print(f"receiving: {other_player.name} {deal.properties_recieving}")
-        print(f"receiving player: {recv}")
-        print(f"curr_player: {curr_player.property_idexes_owned}")
-        print(f"other_player: {other_player.property_idexes_owned}")
-        # other_player.remove_properties(give)
-        # other_player.add_properties(recv)
-
-        # curr_player.remove_properties(recv)
-        # curr_player.add_properties(give)
 
         curr_player.remove_properties(give)
         other_player.add_properties(give)

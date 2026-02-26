@@ -21,8 +21,11 @@ class Auction:
             if not self.curr_winner and curr_player.money > 0:
                 self.curr_winner = curr_player
 
-            if self.curr_player_index in self.players_dropped or not curr_player.can_afford(self.curr_price):
-                self.curr_player_index += 1
+            if not curr_player.can_afford(self.curr_price):
+                self.players_dropped.add(self.curr_player_index)
+
+            if self.curr_player_index in self.players_dropped:
+                self.advance()
                 continue
 
             req = ActionRequest(request=f"You're currently in an auction for the property {self.property.name} - {self.property.property_group}, {curr_player.name}. Current winner is {self.curr_winner.name if self.curr_winner else 'no one'}. Highest price is ${self.curr_price}. You currently have ${curr_player.money}. How much do you bid on top of this? Enter <= 0 or over ${curr_player.money - self.curr_price} to exit the auction", 
@@ -35,7 +38,7 @@ class Auction:
                 self.curr_winner = curr_player
             else:
                 self.players_dropped.add(self.curr_player_index)
-            self.curr_player_index += 1
+            self.advance()
 
         if not self.curr_winner:
             raise ValueError("Auction ended with no winner?")
@@ -44,6 +47,9 @@ class Auction:
     def get_curr_player(self) -> Player:
         players = self.board.players 
         return players[self.curr_player_index % len(players)]
-    
+
+    def advance(self):
+        self.curr_player_index = (self.curr_player_index + 1) % len(self.board.players)
+
     def is_over(self):
         return len(self.board.players) - 1 == len(self.players_dropped)

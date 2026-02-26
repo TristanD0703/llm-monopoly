@@ -8,7 +8,7 @@ class Player:
         self.money = initial_money
         self.jail_release_cost = jail_release_cost
         self.max_jail_rolls = max_jail_rolls
-        self.property_idexes_owned: set[int] = set()
+        self.property_indexes_owned: set[int] = set()
         self.curr_index = 0
         self.is_in_jail = False
         self.name = name
@@ -35,11 +35,19 @@ class Player:
         return False
 
     def remove_properties(self, props: list[int]):
-        self.property_idexes_owned -= set(props)
+        for p in props:
+            prop = self.game.spaces[p]
+            prop.owned_by = None
+
+        self.property_indexes_owned -= set(props)
         pass
 
     def add_properties(self, props: list[int]):
-        self.property_idexes_owned = self.property_idexes_owned.union(set(props))
+        for p in props:
+            prop = self.game.spaces[p]
+            prop.owned_by = self
+
+        self.property_indexes_owned = self.property_indexes_owned.union(set(props))
         pass
 
     def transact(self, money: int) -> bool:
@@ -50,6 +58,7 @@ class Player:
         return True
     
     def incarcerate(self):
+        self.jail_rolls = 0
         if not self.game:
             raise ValueError("Board not defined")
 
@@ -63,7 +72,7 @@ class Player:
         return self.money - amount >= 0
 
     def name_to_property_index(self, name: str) -> int:
-        for i in self.property_idexes_owned:
+        for i in self.property_indexes_owned:
             rel_prop = self.game.spaces[i]
             if rel_prop.name == name:
                 return i

@@ -15,5 +15,7 @@ class Card(Space):
         money = 50
         if coin == 1:
             money *= -1
-        player.transact(money)
-        player.io.provide_info(f"You landed on {self.name}. You gained ${money}.")
+        if not player.transact(money):
+            self.board.insufficient_funds_flow(player, -money)
+
+        player.io.provide_info(f"You landed on {self.name}. You {'gained' if coin == 0 else 'lost'} ${money}.")

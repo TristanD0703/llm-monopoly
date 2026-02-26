@@ -52,11 +52,12 @@ class BaseProperty(Space):
                 winner, cost = auc.run()
                 self.board.award_curr_property(winner, cost)
                 self.owned_by = winner
-        else:
+        elif player is not self.owned_by and not self.is_mortgaged:
             curr_rent = self.get_curr_rent()
             if not player.transact(-curr_rent):
                 self.board.insufficient_funds_flow(player, curr_rent)
-            self.owned_by.transact(curr_rent)
+            else:
+                self.owned_by.transact(curr_rent)
             player.io.provide_info(f"You just landed on {self.owned_by.name}'s space! You had to pay ${curr_rent}.")
 
     def offer_to_buy(self, io: BaseIO) -> bool:
@@ -76,7 +77,7 @@ class BaseProperty(Space):
     def who_owns(self) -> Player | None:
         return self.owned_by
     
-    def toggle_mortage(self) -> bool:
+    def toggle_mortgage(self) -> bool:
         if not self.owned_by:
             return False
 

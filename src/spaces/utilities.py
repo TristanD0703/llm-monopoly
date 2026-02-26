@@ -1,6 +1,6 @@
 from ..spaces.property import BaseProperty
 
-class Utlities(BaseProperty):
+class Utilities(BaseProperty):
     UTILITY_PROPERTY_GROUP = "utilities"
     def __init__(self, 
                  name: str, 
@@ -18,7 +18,7 @@ class Utlities(BaseProperty):
             raise ValueError("Cannot get utility rent if not owned")
 
         multiplier = 4
-        if self.name in self.board.player_monopolies(self.owned_by):
+        if self.UTILITY_PROPERTY_GROUP in self.board.player_monopolies(self.owned_by):
             multiplier = 10
 
         return self.board.last_roll * multiplier

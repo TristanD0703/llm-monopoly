@@ -27,7 +27,7 @@ class NormalProperty(BaseProperty):
             return False
 
         if (self.owned_by and 
-            self.name in self.board.player_monopolies(self.owned_by, self.property_group) and 
+            self.property_group in self.board.player_monopolies(self.owned_by) and 
             self.owned_by.transact(-self.house_cost)
             ):
             self.house_count += 1
