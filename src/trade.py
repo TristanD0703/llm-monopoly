@@ -38,9 +38,8 @@ class Trade:
                 self.players[self.curr_turn] = curr_player, True
                 return
             elif res.action_name == "Counteroffer":
-                self.curr_turn = self.get_next()
                 details = self.prompt_trade_details()
-            elif res.action_name == "Counteroffer":
+            elif res.action_name == "Decline":
                 return
             self.counter_times += 1
             self.curr_turn = self.get_next()
@@ -66,8 +65,8 @@ class Trade:
 
     def enact_deal(self, deal: ActionInputTrade):
         
-        curr_player = self.get_curr_player() 
-        other_player = self.get_other_player() 
+        other_player = self.get_curr_player() 
+        curr_player = self.get_other_player() 
 
         curr_player.transact(deal.amount - deal.amount_receiving)
         other_player.transact(deal.amount_receiving - deal.amount)
@@ -77,13 +76,19 @@ class Trade:
 
 
         print(f"giving: {deal.properties_giving}")
-        print(f"giving player: {give}")
-        print(f"receiving: {deal.properties_recieving}")
+        print(f"giving player: {curr_player.name} {give}")
+        print(f"receiving: {other_player.name} {deal.properties_recieving}")
         print(f"receiving player: {recv}")
         print(f"curr_player: {curr_player.property_idexes_owned}")
         print(f"other_player: {other_player.property_idexes_owned}")
-        other_player.remove_properties(give)
-        other_player.add_properties(recv)
+        # other_player.remove_properties(give)
+        # other_player.add_properties(recv)
 
-        curr_player.remove_properties(recv)
-        curr_player.add_properties(give)
+        # curr_player.remove_properties(recv)
+        # curr_player.add_properties(give)
+
+        curr_player.remove_properties(give)
+        other_player.add_properties(give)
+
+        curr_player.add_properties(recv)
+        other_player.remove_properties(recv)
