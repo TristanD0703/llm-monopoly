@@ -29,7 +29,8 @@ def main():
     property_groups: dict[str, list[int]] = {}
 
     
-    io = AgentIO.local_model_ollama('qwen3-coder:30b') 
+    # io = AgentIO.openai_from_env('gpt-4.1-2025-04-14')
+    io = AgentIO.local_model_ollama('qwen3-coder:30b')
     state = BoardState(property_groups)
 
     for space in data['board']['spaces']:

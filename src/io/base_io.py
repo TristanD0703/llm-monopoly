@@ -16,7 +16,6 @@ class BaseIO:
     def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> ActionInputTrade:
         raise NotImplementedError("request_trade_details not implemented")
 
-
     def provide_info(self, message: str):
         pass
 
