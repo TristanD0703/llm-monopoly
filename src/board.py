@@ -10,6 +10,7 @@ from .io.io_data_models import ActionItem, ActionRequest, GameStateModel
 from .player import Player
 from .spaces.space import Space
 
+MAX_PLAYER_REPITITIONS = 10
 
 class BoardState:
     PASS_GO_BONUS = 200
@@ -85,6 +86,7 @@ class BoardState:
         return GameStateModel(player_locations=player_locations, properties_owned=owned, player_banks=banks, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
 
     def next_turn(self):
+        repititions = 0
         while self.running:
             self.repeat = False
             if self.get_curr_player().bankrupt:
@@ -114,8 +116,12 @@ class BoardState:
                 curr_player.incarcerate()
                 self.doubles = 0
 
-            if not self.repeat and self.doubles == 0:
+            repititions += 1
+            if (not self.repeat or repititions > MAX_PLAYER_REPITITIONS) and self.doubles == 0:
+                repititions = 0
                 self.advance_turn()
+
+            
 
     def advance_turn(self):
         self.curr_turn = (self.curr_turn + 1) % len(self.players)

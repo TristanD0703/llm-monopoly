@@ -80,6 +80,7 @@ class AgentIO(BaseIO):
     def send_request(self, message: str, model: type[T], schema: Optional[dict[str, Any]]=None) -> T:
         json_schema = schema if schema else model.model_json_schema() 
         error_count = 10 
+        print(message)
         for _ in range(error_count):
             res = self.client.chat.completions.create(messages=[
                 {

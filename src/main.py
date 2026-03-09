@@ -29,8 +29,8 @@ def main():
     property_groups: dict[str, list[int]] = {}
 
     
-    # io = AgentIO.openai_from_env('gpt-4.1-2025-04-14')
-    io = AgentIO.local_model_ollama('qwen3-coder:30b')
+    remote = AgentIO.openai_from_env('gpt-4.1-2025-04-14')
+    local = AgentIO.local_model_ollama('qwen3-coder:30b')
     state = BoardState(property_groups)
 
     for space in data['board']['spaces']:
@@ -50,8 +50,10 @@ def main():
             state.add_space(Card(space['name'], state.random))
 
 
-    state.add_player(Player('AI Player 1', io))
-    state.add_player(Player('AI Player 2', io))
+    state.add_player(Player('AI Player 1', local))
+    state.add_player(Player('AI Player 2', remote))
+    state.add_player(Player('AI Player 3', local))
+    state.add_player(Player('AI Player 4', remote))
     state.next_turn()
 
 if __name__ == "__main__":
