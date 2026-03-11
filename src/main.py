@@ -1,4 +1,6 @@
 
+from move_broadcaster import MoveBroadcaster
+
 from .io.agent_io import AgentIO
 
 from .board import BoardState
@@ -31,7 +33,9 @@ def main():
     
     remote = AgentIO.openai_from_env('gpt-4.1-2025-04-14')
     local = AgentIO.local_model_ollama('qwen3-coder:30b')
-    state = BoardState(property_groups)
+
+    test = MoveBroadcaster() 
+    state = BoardState(property_groups, test)
 
     for space in data['board']['spaces']:
         if space['type'] == 'space':
@@ -50,9 +54,9 @@ def main():
             state.add_space(Card(space['name'], state.random))
 
 
-    state.add_player(Player('AI Player 1', local))
+    state.add_player(Player('AI Player 1', remote))
     state.add_player(Player('AI Player 2', remote))
-    state.add_player(Player('AI Player 3', local))
+    state.add_player(Player('AI Player 3', remote))
     state.add_player(Player('AI Player 4', remote))
     state.next_turn()
 

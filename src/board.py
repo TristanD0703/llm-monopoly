@@ -1,6 +1,8 @@
 from random import Random
 from typing import Optional
 
+from history import MoveBroadcaster
+
 from .spaces.normal_property import NormalProperty
 
 from .trade import Trade
@@ -10,16 +12,17 @@ from .io.io_data_models import ActionItem, ActionRequest, GameStateModel
 from .player import Player
 from .spaces.space import Space
 
-MAX_PLAYER_REPITITIONS = 10
+MAX_PLAYER_REPITITIONS = 3 
 
 class BoardState:
     PASS_GO_BONUS = 200
 
     def __init__(self, 
                  property_groups: dict[str, list[int]], 
+                 broadcaster: MoveBroadcaster,
                  random_seed: Optional[int] = None
                  ):
-
+        self.broadcaster = broadcaster
         self.players: list[Player] = [] 
         self.curr_turn = 0
         self.property_groups = property_groups
@@ -96,6 +99,14 @@ class BoardState:
             state = self.build_game_state()
             req = self.build_action_request()
             curr_player = self.get_curr_player()
+
+            if repititions > MAX_PLAYER_REPITITIONS:
+                curr_player.io.provide_info("Too many repeated turns, rolling and advancing.")
+                self.move_curr_player_by_dice()
+                self.advance_turn()
+                repititions = 0
+                continue
+
             res = curr_player.io.request_action(req, state)
 
             if res.action_name == 'Roll':
@@ -117,11 +128,9 @@ class BoardState:
                 self.doubles = 0
 
             repititions += 1
-            if (not self.repeat or repititions > MAX_PLAYER_REPITITIONS) and self.doubles == 0:
+            if not self.repeat and self.doubles == 0:
                 repititions = 0
                 self.advance_turn()
-
-            
 
     def advance_turn(self):
         self.curr_turn = (self.curr_turn + 1) % len(self.players)
