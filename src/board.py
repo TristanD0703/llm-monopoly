@@ -1,7 +1,7 @@
 from random import Random
 from typing import Optional
 
-from history import MoveBroadcaster
+from .move_broadcaster import MoveBroadcaster
 
 from .spaces.normal_property import NormalProperty
 
@@ -18,8 +18,8 @@ class BoardState:
     PASS_GO_BONUS = 200
 
     def __init__(self, 
-                 property_groups: dict[str, list[int]], 
-                 broadcaster: MoveBroadcaster,
+                 property_groups: dict[str, list[int]] = {}, 
+                 broadcaster: Optional[MoveBroadcaster] = None,
                  random_seed: Optional[int] = None
                  ):
         self.broadcaster = broadcaster

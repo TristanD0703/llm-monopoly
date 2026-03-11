@@ -293,5 +293,27 @@
                 "rent_costs": [50, 200, 600, 1400, 1700, 2000]
             }
         ]
-    }
+    },
+    "players": [
+        {
+            "name": "AI Player 1",
+            "type": "openai",
+            "model": "gpt-4.1-2025-04-14"
+        },
+        {
+            "name": "AI Player 2",
+            "type": "local",
+            "model": "qwen3-coder:30b"
+        },
+        {
+            "name": "AI Player 3",
+            "type": "openai",
+            "model": "gpt-4.1-2025-04-14"
+        },
+        {
+            "name": "AI Player 4",
+            "type": "local",
+            "model": "qwen3-coder:30b"
+        }
+    ]
 }
