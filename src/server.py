@@ -43,7 +43,7 @@ def on_ping(payload: dict[Any, Any] | None):
     emit("pong", payload or {})
 
 def start_socket(socket: SocketIO):
-    socketio.run( #type: ignore
+    socket.run( #type: ignore
         app,
         host=os.getenv("HOST", "0.0.0.0"),
         port=int(os.getenv("PORT", "8080")),

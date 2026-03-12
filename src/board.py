@@ -198,7 +198,7 @@ class BoardState:
             )
 
         self.broadcaster.add_move(move_data)
-        self.spaces[player.curr_index].land(player)
+        self.spaces[player.curr_index].land(player, self.broadcaster)
 
     def award_curr_property(self, target_player: Player, cost: int):
         curr_player = self.get_curr_player()

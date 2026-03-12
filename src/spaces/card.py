@@ -1,5 +1,7 @@
 from random import Random
 
+from ..move_broadcaster import MoveBroadcaster
+
 from ..player import Player
 
 from .space import Space
@@ -10,7 +12,7 @@ class Card(Space):
         super().__init__(name)
         self.random = rand
 
-    def land(self, player: Player):
+    def land(self, player: Player, broadcaster: MoveBroadcaster):
         coin = self.random.randint(0, 1)
         money = 50
         if coin == 1:

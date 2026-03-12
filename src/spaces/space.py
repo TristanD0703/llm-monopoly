@@ -1,5 +1,7 @@
 from typing import Any
 
+from ..move_broadcaster import MoveBroadcaster
+
 from ..player import Player
 
 class Space:
@@ -8,7 +10,7 @@ class Space:
     def __init__(self, name: str):
         self.name = name
 
-    def land(self, player: Player):
+    def land(self, player: Player, broadcaster: MoveBroadcaster):
         pass
 
     def who_owns(self) -> Player | None:

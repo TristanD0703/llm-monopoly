@@ -1,3 +1,5 @@
+from ..move_broadcaster import MoveBroadcaster
+
 from ..auction import Auction
 
 from ..io.base_io import BaseIO
@@ -37,16 +39,16 @@ class BaseProperty(Space):
         self.is_mortgaged = False
         self.property_group = property_group
 
-    def land(self, player: Player):
+    def land(self, player: Player, broadcaster: MoveBroadcaster):
         if not self.board:
             raise ValueError("Board not assigned.")
 
         if not self.owned_by:
-            if player.can_afford(self.price) and self.offer_to_buy(player.io):
+            if player.can_afford(self.price) and self.offer_to_buy(player.io, broadcaster):
                 self.board.award_curr_property(player, self.price)
                 self.owned_by = player
             else:
-                auc = Auction(self.board.curr_turn)
+                auc = Auction(self.board.curr_turn, broadcaster)
                 auc.board = self.board
                 auc.property = self
                 winner, cost = auc.run()
@@ -60,7 +62,7 @@ class BaseProperty(Space):
                 self.owned_by.transact(curr_rent)
             player.io.provide_info(f"You just landed on {self.owned_by.name}'s space! You had to pay ${curr_rent}.")
 
-    def offer_to_buy(self, io: BaseIO) -> bool:
+    def offer_to_buy(self, io: BaseIO, broadcaster: MoveBroadcaster) -> bool:
         """Ask player if they want to buy. If they cannot afford or they deny, return false"""
 
         req = ActionRequest(available_actions=[
@@ -68,7 +70,7 @@ class BaseProperty(Space):
                 ActionItem(action_name="Auction", description="Allows yourself and other players to compete for the property. Highest payer wins.")
             ], request=f"You just rolled a {self.board.last_roll} and landed on {self.name} - {self.property_group}, which no one owns yet. It costs ${self.price} What would you like to do?")
 
-        res = io.request_action(req, None)
+        res = io.request_action(req, broadcaster)
 
         if res.action_name == "Purchase":
             return True
