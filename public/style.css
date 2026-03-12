@@ -1,0 +1,363 @@
+:root {
+    --bg-color: #0a0a0c;
+    --card-bg: #151518;
+    --text-color: #e0e0e0;
+    --accent-color: #00ff9d;
+    --border-color: #333;
+    --font-mono: 'Montserrat', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-mono);
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.left-sidebar {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    z-index: 100;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 0;
+    background: none;
+    border: none;
+    pointer-events: none;
+}
+
+.left-sidebar > * {
+    pointer-events: auto;
+}
+
+.bank-accounts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bank-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: rgba(21, 21, 24, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    font-size: 1.1rem;
+    backdrop-filter: blur(5px);
+    width: fit-content;
+}
+
+.viewer-count {
+    color: var(--accent-color);
+    font-weight: bold;
+    font-size: 0.8rem;
+    text-align: left;
+    padding: 10px 15px;
+    background: rgba(21, 21, 24, 0.85);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 255, 157, 0.2);
+    width: fit-content;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.game-container {
+    display: flex;
+    flex: 1;
+    gap: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.board-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: 2.5fr repeat(9, 2fr) 2.5fr;
+    grid-template-rows: 2.5fr repeat(9, 2fr) 2.5fr;
+    width: 95vmin;
+    height: 95vmin;
+    max-width: 1000px;
+    max-height: 1000px;
+    border: 2px solid #000;
+    background-color: #f9f9f9;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.space {
+    border: 1px solid #ccc;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: #000000;
+    text-align: center;
+    text-transform: capitalize;
+    cursor: pointer;
+    transition: background 0.2s;
+    background: #eef0e5;
+    overflow: hidden;
+}
+
+/* Base rotation layout based on side */
+.bottom { flex-direction: column; justify-content: flex-start; }
+.top { flex-direction: column-reverse; justify-content: flex-start; }
+.left { flex-direction: row-reverse; justify-content: flex-start; }
+.right { flex-direction: row; justify-content: flex-start; }
+
+.space-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.space-name {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.space-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 4px;
+}
+.space-icon svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Rotation logic */
+.bottom .space-content { transform: none; }
+.top .space-content { transform: rotate(180deg); }
+.left .space-content,
+.right .space-content {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+}
+.left .space-content { transform: rotate(90deg); }
+.right .space-content { transform: rotate(-90deg); }
+
+/* Aspect ratio handling for the text block itself on sides */
+.left .space-name, .right .space-name {
+    width: 100%;
+}
+
+/* Corner spaces don't rotate */
+#space-0 .space-content,
+#space-10 .space-content,
+#space-20 .space-content,
+#space-30 .space-content {
+    transform: none !important;
+}
+
+.space-color-bar {
+    position: relative;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Tabs close to center depending on the flex-direction we set above */
+.bottom .space-color-bar { height: 25%; width: 100%; }
+.top .space-color-bar { height: 25%; width: 100%; }
+.left .space-color-bar { height: 100%; width: 25%; }
+.right .space-color-bar { height: 100%; width: 25%; }
+
+/* Corner spaces usually don't have color bars, but let's ensure they look right */
+.space.special { background: #e3e6d8; }
+.space:hover { background: #fafbfa; z-index: 10; }
+
+/* Property Group Colors (ONLY applied to the tab and property card header, NOT the whole space) */
+.space-color-bar.brown, .card-header.brown { background-color: #955436; color: white; }
+.space-color-bar.light-blue, .card-header.light-blue { background-color: #aae0fa; color: black; }
+.space-color-bar.pink, .card-header.pink { background-color: #d93a96; color: white; }
+.space-color-bar.orange, .card-header.orange { background-color: #f7941d; color: black; }
+.space-color-bar.red, .card-header.red { background-color: #ed1b24; color: white; }
+.space-color-bar.yellow, .card-header.yellow { background-color: #fef200; color: black; }
+.space-color-bar.green, .card-header.green { background-color: #1fb25a; color: white; }
+.space-color-bar.dark-blue, .card-header.dark-blue { background-color: #0072bb; color: white; }
+
+.board-center {
+    grid-column: 2 / 11;
+    grid-row: 2 / 11;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #0f0f12;
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+#property-card-container {
+    z-index: 20;
+    transition: all 0.3s ease;
+}
+
+.property-card {
+    width: 280px;
+    background: #fdfdfd;
+    color: #111;
+    padding: 20px;
+    border: 3px solid #000;
+    box-shadow: 8px 8px 0px var(--accent-color);
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+}
+
+.property-card h3 {
+    font-family: var(--font-mono);
+}
+
+.property-card .rent-line {
+    font-family: var(--font-mono);
+}
+
+.close-card {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    color: #000;
+}
+
+.close-card:hover {
+    color: var(--accent-color);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.player-token {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    position: absolute;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 5;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar {
+    width: 350px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-item {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    border-left: 3px solid transparent;
+}
+
+.history-item .header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    opacity: 0.7;
+    font-size: 0.75rem;
+}
+
+/* Tooltip */
+.tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    border: 1px solid var(--accent-color);
+}
+
+.card-header {
+    border: 2px solid black;
+    padding: 10px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.rent-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin: 3px 0;
+}
+
+.rent-line.active {
+    background: #ffff00;
+    font-weight: bold;
+}
+
+.owner-glow {
+    box-shadow: inset 0 0 15px currentColor;
+}

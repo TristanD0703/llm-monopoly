@@ -22,7 +22,7 @@ class BoardState:
                  broadcaster: MoveBroadcaster,
                  property_groups: dict[str, list[int]] = {}, 
                  random_seed: Optional[int] = None,
-                 time_between: float = 3
+                 time_between: float = 5
                  ):
         self.broadcaster = broadcaster
         self.players: list[Player] = [] 

@@ -17,6 +17,7 @@ class Move:
         res: dict[str, Any] = ({
             "player_name": self.player_name,
             "action_name": self.action_name,
+            "reason": self.reason,
             "data": self.data,
             "game_state": None,
         })

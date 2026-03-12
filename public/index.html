@@ -1,9 +1,45 @@
-<!doctype html>
-<html>
-    <head>
-        <title>Slopoly</title>
-    </head>
-    <body>
-        <div>Hello World! Howdy do.</div>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monopoly Observer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js" integrity="sha384-kzavj5fiMwLKzzD1f8S7TeoVIEi7uKHvbTA3ueZkrzYq75pNQUiUi6Dy98Q3fxb0" crossorigin="anonymous"></script>
+</head>
+<body class="dark-theme">
+    <main class="game-container">
+        <aside class="left-sidebar">
+            <div class="viewer-count">
+                WATCHING: <span id="watcher-count">0</span>
+            </div>
+            <div id="bank-accounts" class="bank-accounts">
+                <!-- Bank accounts will be injected here -->
+            </div>
+        </aside>
+
+        <div class="board-wrapper">
+            <div id="monopoly-board" class="board">
+                <!-- Spaces will be injected here -->
+                <div class="board-center">
+                    <div id="property-card-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="sidebar">
+            <h2>Event History</h2>
+            <div id="event-history" class="history-list">
+                <!-- History items will be injected here -->
+            </div>
+        </aside>
+    </main>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script type="module" src="main.js"></script>
+</body>
 </html>

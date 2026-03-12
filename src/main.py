@@ -68,7 +68,7 @@ class SocketReceiver(Receiver):
         self.socket = socket
 
     def on_move(self, event: dict[str, Any]):
-        self.socket.emit('move', event) # type: ignore
+        self.socket.emit('move', event, namespace='/ws') # type: ignore
 
 class PrintReceiver(Receiver):
     def on_move(self, event: dict[str, Any]):
@@ -80,7 +80,7 @@ async def main():
     args = config_argv()
     data = load_config(args)
 
-    test = MoveBroadcaster([PrintReceiver()]) 
+    test = MoveBroadcaster([PrintReceiver(), SocketReceiver(socketio)]) 
     state = BoardState(broadcaster=test)
 
     parse_spaces(state, data) 
