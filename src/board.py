@@ -1,4 +1,5 @@
 from random import Random
+from time import sleep
 from typing import Optional
 
 from .move_broadcaster import Move, MoveBroadcaster
@@ -20,7 +21,8 @@ class BoardState:
     def __init__(self, 
                  broadcaster: MoveBroadcaster,
                  property_groups: dict[str, list[int]] = {}, 
-                 random_seed: Optional[int] = None
+                 random_seed: Optional[int] = None,
+                 time_between: float = 3
                  ):
         self.broadcaster = broadcaster
         self.players: list[Player] = [] 
@@ -32,6 +34,7 @@ class BoardState:
         self.doubles = 0 
         self.running = True
         self.repeat = False
+        self.time_between = time_between
 
     def build_action_request(self) -> ActionRequest:
         action_items: list[ActionItem]= []
@@ -97,6 +100,8 @@ class BoardState:
 
         repititions = 0
         while self.running:
+            sleep(self.time_between)
+
             self.repeat = False
             if self.get_curr_player().bankrupt:
                 self.advance_turn()
