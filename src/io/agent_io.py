@@ -4,6 +4,8 @@ from typing import Any, Optional, TypeVar
 from openai import OpenAI
 from pydantic import BaseModel
 
+from ..move_broadcaster import MoveBroadcaster
+
 from ..io.base_io import BaseIO
 from ..io.io_data_models import ActionInput, ActionInputInt, ActionInputTrade, ActionRequest, GameStateModel
 from ..io.prompts.init_prompt import SYSTEM_PROMPT
@@ -48,26 +50,29 @@ class AgentIO(BaseIO):
         json['properties']['action_name']['enum'] = str_list
         return json
 
-    def request_action(self, options: ActionRequest, game_state: GameStateModel | None = None) -> ActionInput:
-        message = self.build_message(options, game_state)
+    def request_action(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInput:
+        message = self.build_message(options, broadcaster, game_state)
         res = self.send_request(message, ActionInput, self.action_input_json_schema(options))
 
         return res
     
-    def request_action_int(self, options: ActionRequest, game_state: GameStateModel | None = None) -> ActionInputInt:
-        message = self.build_message(options, game_state)
+    def request_action_int(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInputInt:
+        message = self.build_message(options, broadcaster, game_state)
         res = self.send_request(message, ActionInputInt)
 
         return res
     
-    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> ActionInputTrade:
-        message = self.build_message(options, game_state)
+    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str, broadcaster: MoveBroadcaster) -> ActionInputTrade:
+        message = self.build_message(options, broadcaster, game_state)
         res = self.send_request(message, ActionInputTrade)
 
         return res
 
-    def build_message(self, options: ActionRequest, game_state: GameStateModel | None) -> str:
-        message = self.prev_info 
+    def build_message(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None) -> str:
+        moves = ""
+        if broadcaster:
+            moves = json.dumps(broadcaster.get_history())
+        message = f"{moves} \n\n {self.prev_info}"
         if game_state:
             message += self.game_state_message(game_state)
         message += self.action_request_message(options)
@@ -80,7 +85,6 @@ class AgentIO(BaseIO):
     def send_request(self, message: str, model: type[T], schema: Optional[dict[str, Any]]=None) -> T:
         json_schema = schema if schema else model.model_json_schema() 
         error_count = 10 
-        print(message)
         for _ in range(error_count):
             res = self.client.chat.completions.create(messages=[
                 {
@@ -100,7 +104,6 @@ class AgentIO(BaseIO):
                 continue
 
             try:
-                print(text)
                 json_res = json.loads(text.strip())
                 parsed = model.model_validate(json_res)
                 return parsed

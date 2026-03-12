@@ -302,8 +302,8 @@
         },
         {
             "name": "AI Player 2",
-            "type": "local",
-            "model": "qwen3-coder:30b"
+            "type": "openai",
+            "model": "gpt-4.1-2025-04-14"
         },
         {
             "name": "AI Player 3",
@@ -312,8 +312,8 @@
         },
         {
             "name": "AI Player 4",
-            "type": "local",
-            "model": "qwen3-coder:30b"
+            "type": "openai",
+            "model": "gpt-4.1-2025-04-14"
         }
     ]
 }

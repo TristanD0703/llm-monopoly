@@ -1,5 +1,5 @@
 
-from typing import Optional
+from ..move_broadcaster import MoveBroadcaster
 from .io_data_models import ActionInput, ActionInputInt, ActionInputTrade, ActionRequest, GameStateModel
 
 
@@ -7,13 +7,13 @@ class BaseIO:
     def __init__(self, verbose: bool=False):
         self.verbose = verbose
 
-    def request_action(self, options: ActionRequest, game_state: Optional[GameStateModel]=None) -> ActionInput :
+    def request_action(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInput:
         return ActionInput(action_name="Nothing", explanation="I do nothing.")
     
-    def request_action_int(self, options: ActionRequest, game_state: Optional[GameStateModel]=None) -> ActionInputInt:
+    def request_action_int(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInputInt:
         raise NotImplementedError("request_action_int not implemented")
     
-    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> ActionInputTrade:
+    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str, broadcaster: MoveBroadcaster) -> ActionInputTrade:
         raise NotImplementedError("request_trade_details not implemented")
 
     def provide_info(self, message: str):

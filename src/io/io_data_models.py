@@ -39,5 +39,3 @@ class GameStateModel(BaseModel):
     last_roll: int = Field(..., description="The number you just rolled")
     doubles_count: int = Field(..., description="How many doubles you've rolled")
     previous_player_name: str = Field(..., description="name of previous player")
-
-

@@ -3,7 +3,7 @@ import asyncio
 import threading
 from typing import Any
 from .io.cli import CLI
-from .move_broadcaster import MoveBroadcaster
+from .move_broadcaster import MoveBroadcaster, Receiver
 from .io.agent_io import AgentIO
 from .board import BoardState
 from json import load
@@ -17,6 +17,7 @@ from .spaces.railroad import Railroad
 from .spaces.space import Space
 from .spaces.tax_space import TaxSpace
 from .server import socketio, start_socket
+from flask_socketio import SocketIO
 import dotenv
 
 def config_argv():
@@ -62,12 +63,24 @@ def load_config(args: dict[str, Any]):
         data = load(f)
     return data
 
+class SocketReceiver(Receiver):
+    def __init__(self, socket: SocketIO):
+        self.socket = socket
+
+    def on_move(self, event: dict[str, Any]):
+        self.socket.emit('move', event) # type: ignore
+
+class PrintReceiver(Receiver):
+    def on_move(self, event: dict[str, Any]):
+        print(event)
+
+
 async def main():
     dotenv.load_dotenv()
     args = config_argv()
     data = load_config(args)
 
-    test = MoveBroadcaster(socketio) 
+    test = MoveBroadcaster([PrintReceiver()]) 
     state = BoardState(broadcaster=test)
 
     parse_spaces(state, data) 
@@ -77,7 +90,6 @@ async def main():
     socket_thread.start()
     
     state.next_turn()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

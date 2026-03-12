@@ -1,7 +1,7 @@
 from random import Random
 from typing import Optional
 
-from .move_broadcaster import MoveBroadcaster
+from .move_broadcaster import Move, MoveBroadcaster
 
 from .spaces.normal_property import NormalProperty
 
@@ -18,8 +18,8 @@ class BoardState:
     PASS_GO_BONUS = 200
 
     def __init__(self, 
+                 broadcaster: MoveBroadcaster,
                  property_groups: dict[str, list[int]] = {}, 
-                 broadcaster: Optional[MoveBroadcaster] = None,
                  random_seed: Optional[int] = None
                  ):
         self.broadcaster = broadcaster
@@ -89,6 +89,12 @@ class BoardState:
         return GameStateModel(player_locations=player_locations, properties_owned=owned, player_banks=banks, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
 
     def next_turn(self):
+        names: list[str] = []
+        for p in self.players:
+            names.append(p.name)
+        move_data = Move('system', 'begin_game', '', {'players': list(names)})
+        self.broadcaster.add_move(move_data)
+
         repititions = 0
         while self.running:
             self.repeat = False
@@ -107,7 +113,7 @@ class BoardState:
                 repititions = 0
                 continue
 
-            res = curr_player.io.request_action(req, state)
+            res = curr_player.io.request_action(req, self.broadcaster, state)
 
             if res.action_name == 'Roll':
                 self.move_curr_player_by_dice()
@@ -121,6 +127,8 @@ class BoardState:
             winner = self.check_winner()
             if winner:
                 print(f"The winner is {winner.name}!")
+                move_data = Move("system", "game_over", "", {'winner': winner.name}, self.build_game_state())
+                self.broadcaster.add_move(move_data)
                 return
 
             if self.doubles >= 3:
@@ -131,7 +139,10 @@ class BoardState:
             if not self.repeat and self.doubles == 0:
                 repititions = 0
                 self.advance_turn()
-
+            
+        move_data = Move("system", "game_over", "", data={}, game_state=self.build_game_state())
+        self.broadcaster.add_move(move_data)
+        
     def advance_turn(self):
         self.curr_turn = (self.curr_turn + 1) % len(self.players)
 
@@ -173,6 +184,15 @@ class BoardState:
             player.transact(self.PASS_GO_BONUS)
         
         player.set_position(next_space)
+        move_data = Move(
+            player_name=player.name, 
+            action_name='dice_roll', 
+            game_state=self.build_game_state(), 
+            data={'roll_number': moving_spaces, 'is_doubles': self.doubles > 0},
+            reason=""
+            )
+
+        self.broadcaster.add_move(move_data)
         self.spaces[player.curr_index].land(player)
 
     def award_curr_property(self, target_player: Player, cost: int):
@@ -180,6 +200,10 @@ class BoardState:
         if cost:
             target_player.transact(-cost)
         target_player.property_indexes_owned.add(curr_player.curr_index)
+
+        curr_space = self.get_curr_space()
+        move_data = Move(target_player.name, 'purchase_property', '', {'name': curr_space.name}, self.build_game_state())
+        self.broadcaster.add_move(move_data)
 
     def player_monopolies(self, player: Player) -> set[str]:
         monopoly_names: set[str]= set() 
@@ -219,7 +243,7 @@ class BoardState:
         curr_property = self.get_curr_space()
         if issubclass(type(curr_property), BaseProperty):
             property = property if property else curr_property # type: ignore
-            auc = Auction(self.curr_turn)
+            auc = Auction(self.curr_turn, self.broadcaster)
             auc.property = curr_property
             auc.board = self
             winner, price = auc.run()
@@ -228,6 +252,9 @@ class BoardState:
             raise ValueError("Cannot auction on non property space")
 
     def insufficient_funds_flow(self, player: Player, required_amount: int):
+        move_data = Move(player.name, "insufficient_funds", '', {'required_amount': required_amount}, self.build_game_state())
+        self.broadcaster.add_move(move_data)
+
         while not player.can_afford(required_amount):
             actions: list[ActionItem] = []
             if len(player.property_indexes_owned) > 0:
@@ -237,7 +264,7 @@ class BoardState:
 
             req = ActionRequest(request=f"You don't have enough money! You currently have ${player.money}, but you owe ${required_amount}. What will you do to resolve this?", 
                                 available_actions=actions)
-            res = player.io.request_action(req, game_state=self.build_game_state()) 
+            res = player.io.request_action(req, self.broadcaster, game_state=self.build_game_state()) 
 
             if res.action_name == "Mortgage properties":
                 self.mortgage_properties(player)
@@ -245,6 +272,10 @@ class BoardState:
                 self.trade()
             elif res.action_name == "Declare bankruptcy":
                 player.bankrupt = True
+
+                move_data = Move(player.name, 'declare_bankruptcy', res.explanation, data={}, game_state=self.build_game_state())
+                self.broadcaster.add_move(move_data)
+
                 if hasattr(self.get_curr_space(), "owned_by"):
                     owned_by = getattr(self.get_curr_space(), "owned_by")
                     owned_by.add_properties(player.property_indexes_owned)
@@ -255,10 +286,12 @@ class BoardState:
             else:
                 raise ValueError("Action input not recognized")
 
+        move_data = Move(player.name, "insufficient_funds_resolved", '', data={}, game_state=self.build_game_state())
+        self.broadcaster.add_move(move_data)
         player.transact(-required_amount)
         self.repeat = False
 
-    def prompt_mortgage_list(self, player: Player) -> BaseProperty:
+    def prompt_mortgage_list(self, player: Player) -> tuple[BaseProperty, str]:
         prop_descs: list[ActionItem] = []
         name_to_prop: dict[str, BaseProperty] = {}
         for prop_i in player.property_indexes_owned:
@@ -269,15 +302,17 @@ class BoardState:
                 prop_descs.append(ActionItem(action_name=name, description=f"Mortgaging this property will earn you {prop.mortgage_value}")) # type: ignore
 
         req = ActionRequest(request="Please choose which of your properties to mortgage or unmortgage", available_actions=prop_descs)
-        res = player.io.request_action(req)
-        return name_to_prop[res.action_name]
+        res = player.io.request_action(req, self.broadcaster)
+        return name_to_prop[res.action_name], res.explanation
 
     def mortgage_properties(self, player: Player | None=None):
         self.repeat = True
         player = self.get_curr_player() if not player else player
-        res = self.prompt_mortgage_list(player)
+        res, exp = self.prompt_mortgage_list(player)
         if res.toggle_mortgage():
             player.io.provide_info(f"You just {'un' if not res.is_mortgaged else ''}mortgaged {res.name} for ${res.mortgage_value}. You now have ${player.money}.")
+            move_data = Move(player.name, "toggle_mortgage", exp, {'name': res.name}, self.build_game_state())
+            self.broadcaster.add_move(move_data)
         else:
             player.io.provide_info(f"Cannot afford to unmortgage {res.name}.")
         pass
@@ -292,21 +327,21 @@ class BoardState:
             name_actions.append(ActionItem(action_name=p.name, description=""))
             name_player[p.name] = p
         req = ActionRequest(request="Who would you like to trade with?", available_actions=name_actions)
-        res = self.get_curr_player().io.request_action(req)
+        res = self.get_curr_player().io.request_action(req, self.broadcaster)
 
         return name_player[res.action_name]
 
     def trade(self):
         self.repeat = True
         target = self.prompt_target_player_trade()
-        t = Trade(self.get_curr_player(), target, self.build_game_state())
+        t = Trade(self.get_curr_player(), target, self.build_game_state(), self.broadcaster)
         t.begin_trade()
         pass
 
     def get_curr_space(self) -> Space:
         return self.spaces[self.get_curr_player().curr_index]
 
-    def prompt_property_houses(self, props: list[Space]) -> NormalProperty:
+    def prompt_property_houses(self, props: list[Space]) -> tuple[NormalProperty, str]:
         actions: list[ActionItem] = []
         for p in props:
             if hasattr(p, 'house_count'):
@@ -314,11 +349,11 @@ class BoardState:
                 actions.append(ActionItem(action_name=p.name, description=f"Currently has {count} houses")) 
 
         req = ActionRequest(request="Choose a property to buy houses for:", available_actions=actions)
-        res = self.get_curr_player().io.request_action(req)
+        res = self.get_curr_player().io.request_action(req, self.broadcaster)
         
         for p in props:
             if p.name == res.action_name:
-                return p # type: ignore
+                return p, res.explanation # type: ignore
         raise ValueError("request_action returned an invalid option")
 
     def manage_houses(self):
@@ -330,18 +365,24 @@ class BoardState:
         for g in groups:
             monopoly_properties.extend(list(map(lambda x: self.spaces[x], self.property_groups[g])))
 
-        chosen = self.prompt_property_houses(monopoly_properties)
-        count = curr_player.io.request_action_int(options=ActionRequest(request="How many houses do you wish to purchase/sell?", available_actions=[]))
+        chosen, reason = self.prompt_property_houses(monopoly_properties)
+        count = curr_player.io.request_action_int(broadcaster=self.broadcaster, options=ActionRequest(request="How many houses do you wish to purchase/sell?", available_actions=[]))
         method = curr_player.io.request_action(ActionRequest(
             available_actions=[ActionItem(action_name="Buy", description=""), ActionItem(action_name="Sell", description="")],
             request="Buy or sell?"
-        ))
+        ), self.broadcaster)
 
         if count.number < 0:
             return
 
+        event_name = f"{method.action_name.lower()}_houses"
+        actual_count = 0
         for _ in range(count.number):
             if method.action_name == "Buy" and not chosen.add_house():
                 curr_player.io.provide_info("Could not buy house. Could not afford.")
             elif not chosen.sell_house():
                 curr_player.io.provide_info("Could not sell house. No houses to sell!")
+            actual_count += 1
+
+        move_data = Move(curr_player.name, event_name, reason, {'property_name': chosen.name, 'count': count.number}, self.build_game_state())
+        self.broadcaster.add_move(move_data)

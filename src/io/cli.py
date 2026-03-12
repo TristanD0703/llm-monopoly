@@ -1,4 +1,6 @@
-from typing import Any, Optional
+from typing import Any
+
+from ..move_broadcaster import MoveBroadcaster
 
 from ..io.io_data_models import ActionInputTrade
 from ..io.base_io import BaseIO
@@ -6,7 +8,7 @@ from ..io.io_data_models import ActionInput, ActionInputInt, ActionRequest, Game
 
 
 class CLI(BaseIO):
-    def request_action(self, options: ActionRequest, game_state: GameStateModel | None=None) -> ActionInput:
+    def request_action(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInput:
         if game_state:
             print(self.game_state_message(game_state))
 
@@ -14,14 +16,14 @@ class CLI(BaseIO):
 
         return self.get_action(options)
 
-    def request_action_int(self, options: ActionRequest, game_state: Optional[GameStateModel]=None) -> ActionInputInt:
+    def request_action_int(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInputInt:
         if game_state:
             print(self.game_state_message(game_state))
 
         print(self.action_request_message(options))
         return self.get_action_int()
 
-    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> ActionInputTrade:
+    def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str, broadcaster: MoveBroadcaster) -> ActionInputTrade:
         print(options.request + "\nGive money amount:")
         give = self.get_optional_int()
 
