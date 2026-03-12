@@ -88,7 +88,6 @@ function connectToGameServer() {
     socket.on('connect', () => {
         console.log('[socket] connected');
         State.updateGameState((state) => {
-            state.usersWatching = 1;
             state.history.push({
                 playerName: 'system',
                 playerIcon: '🛰️',
@@ -111,6 +110,18 @@ function connectToGameServer() {
                 reason,
             });
             trimHistory(state);
+        });
+    });
+
+    socket.on('spectator_count', (payload) => {
+        const count = Number(payload?.count);
+        if (!Number.isFinite(count) || count < 0) {
+            console.warn('[socket] invalid spectator_count payload', payload);
+            return;
+        }
+
+        State.updateGameState((state) => {
+            state.usersWatching = Math.floor(count);
         });
     });
 

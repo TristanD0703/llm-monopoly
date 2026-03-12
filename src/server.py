@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import os
+import threading
 from pathlib import Path
 from typing import Any
 
-from flask import Flask, send_from_directory
+from flask import Flask, request, send_from_directory
 from flask_socketio import SocketIO, emit # type: ignore
 
 
@@ -14,6 +15,21 @@ INDEX_FILE = "index.html"
 
 app = Flask(__name__, static_folder=None)
 socketio = SocketIO(app, cors_allowed_origins="*")
+_spectators: set[str] = set()
+_spectators_lock = threading.Lock()
+
+
+def _spectator_count() -> int:
+    with _spectators_lock:
+        return len(_spectators)
+
+
+def _broadcast_spectator_count():
+    socketio.emit(
+        "spectator_count",
+        {"count": _spectator_count()},
+        namespace="/ws",
+    )
 
 
 @app.route("/", defaults={"requested_path": INDEX_FILE})
@@ -35,7 +51,17 @@ def serve_static(requested_path: str):
 
 @socketio.on("connect", namespace="/ws")
 def on_connect():
+    with _spectators_lock:
+        _spectators.add(request.sid)
     emit("connected", {"message": "Socket connected"})
+    _broadcast_spectator_count()
+
+
+@socketio.on("disconnect", namespace="/ws")
+def on_disconnect():
+    with _spectators_lock:
+        _spectators.discard(request.sid)
+    _broadcast_spectator_count()
 
 
 @socketio.on("ping", namespace="/ws")

@@ -1,6 +1,6 @@
 from random import Random
 
-from ..move_broadcaster import MoveBroadcaster
+from ..move_broadcaster import Move, MoveBroadcaster
 
 from ..player import Player
 
@@ -21,3 +21,5 @@ class Card(Space):
             self.board.insufficient_funds_flow(player, -money)
 
         player.io.provide_info(f"You landed on {self.name}. You {'gained' if coin == 0 else 'lost'} ${money}.")
+        move_data = Move(player.name, 'card_space', '', {'money_gained': money})
+        broadcaster.add_move(move_data)
