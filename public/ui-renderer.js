@@ -71,11 +71,7 @@ function getIconForSpace(space) {
                 <path d="M7 4v16M11 4v16M15 4v16M19 4v16" stroke="#8e9299" stroke-width="1.2"/>
                 <text x="12" y="13.8" font-size="5.5" font-weight="700" fill="#fef200" text-anchor="middle" font-family="Montserrat">JV</text>
             </svg>`,
-        12: `<svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3a6 6 0 0 0-6 6c0 2.2 1.2 4.1 3 5.2V17h6v-2.8c1.8-1.1 3-3 3-5.2a6 6 0 0 0-6-6z" fill="#fef200" stroke="#333" stroke-width="1"/>
-                <rect x="9.2" y="17" width="5.6" height="2" rx="1" fill="#444"/>
-                <path d="M12.8 7.5h2.2l-1.9 2.4h1.8l-3 3.9 0.7-2.7h-1.8z" fill="#333"/>
-            </svg>`,
+        12: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M424.5 355.1C449 329.2 464 294.4 464 256C464 176.5 399.5 112 320 112C240.5 112 176 176.5 176 256C176 294.4 191 329.2 215.5 355.1C236.8 377.5 260.4 409.1 268.8 448L371.2 448C379.6 409 403.2 377.5 424.5 355.1zM459.3 388.1C435.7 413 416 443.4 416 477.7L416 496C416 540.2 380.2 576 336 576L304 576C259.8 576 224 540.2 224 496L224 477.7C224 443.4 204.3 413 180.7 388.1C148 353.7 128 307.2 128 256C128 150 214 64 320 64C426 64 512 150 512 256C512 307.2 492 353.7 459.3 388.1zM272 248C272 261.3 261.3 272 248 272C234.7 272 224 261.3 224 248C224 199.4 263.4 160 312 160C325.3 160 336 170.7 336 184C336 197.3 325.3 208 312 208C289.9 208 272 225.9 272 248z"/></svg>`,
         15: `<svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="4" y="6" width="16" height="9" rx="2" fill="#333"/>
                 <rect x="6" y="8" width="6" height="3" fill="#f6f6f6"/>
