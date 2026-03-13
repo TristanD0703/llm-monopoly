@@ -137,7 +137,7 @@ class BoardState:
                 return
 
             if self.doubles >= 3:
-                curr_player.incarcerate()
+                curr_player.incarcerate(self.broadcaster)
                 self.doubles = 0
 
             repititions += 1

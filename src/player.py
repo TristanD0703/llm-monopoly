@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Any
 
+from .move_broadcaster import Move, MoveBroadcaster
+
 from .io.base_io import BaseIO
 
 class Player:
@@ -57,13 +59,15 @@ class Player:
         self.money += money
         return True
     
-    def incarcerate(self):
+    def incarcerate(self, broadcaster: MoveBroadcaster):
         self.jail_rolls = 0
         if not self.game:
             raise ValueError("Board not defined")
 
         self.is_in_jail = True
         self.curr_index: int = self.game.jail_index
+        move_data = Move(self.name, 'incarcerate', '', {})
+        broadcaster.add_move(move_data)
 
     def release(self):
         self.is_in_jail = False

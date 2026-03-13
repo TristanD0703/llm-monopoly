@@ -1,4 +1,4 @@
-from ..move_broadcaster import MoveBroadcaster
+from ..move_broadcaster import Move, MoveBroadcaster
 
 from ..auction import Auction
 
@@ -61,6 +61,8 @@ class BaseProperty(Space):
             else:
                 self.owned_by.transact(curr_rent)
             player.io.provide_info(f"You just landed on {self.owned_by.name}'s space! You had to pay ${curr_rent}.")
+            move_data = Move(player.name, 'pay_rent', '', {'amount': curr_rent, 'other_player': self.owned_by.name}, None)
+            broadcaster.add_move(move_data)
 
     def offer_to_buy(self, io: BaseIO, broadcaster: MoveBroadcaster) -> bool:
         """Ask player if they want to buy. If they cannot afford or they deny, return false"""

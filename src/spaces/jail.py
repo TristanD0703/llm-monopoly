@@ -9,4 +9,4 @@ class Jail(Space):
         super().__init__(name)
 
     def land(self, player: Player, broadcaster: MoveBroadcaster):
-        player.incarcerate()
+        player.incarcerate(broadcaster)
