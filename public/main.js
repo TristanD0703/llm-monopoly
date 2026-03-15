@@ -8,6 +8,7 @@ const historyEl = document.getElementById('event-history');
 const watcherEl = document.getElementById('watcher-count');
 const turnCountEl = document.getElementById('turn-count');
 const tooltipEl = document.getElementById('tooltip');
+const historyToggleEl = document.getElementById('history-toggle');
 const propertyCardContainer = document.getElementById(
     'property-card-container',
 );
@@ -55,6 +56,7 @@ function init() {
 
     // Setup Board Interactivity
     setupBoardEvents();
+    setupHistoryToggle();
 
     // Live WebSocket integration
     connectToGameServer();
@@ -212,6 +214,37 @@ function setupBoardEvents() {
             );
         }
     });
+}
+
+function setupHistoryToggle() {
+    if (!historyToggleEl) {
+        return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 1099px)');
+
+    function syncHistoryState() {
+        if (!mediaQuery.matches) {
+            document.body.classList.remove('history-open');
+            historyToggleEl.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        const isOpen = document.body.classList.contains('history-open');
+        historyToggleEl.setAttribute('aria-expanded', String(isOpen));
+    }
+
+    historyToggleEl.addEventListener('click', () => {
+        if (!mediaQuery.matches) {
+            return;
+        }
+
+        document.body.classList.toggle('history-open');
+        syncHistoryState();
+    });
+
+    mediaQuery.addEventListener('change', syncHistoryState);
+    syncHistoryState();
 }
 
 function showTooltip(e, text) {

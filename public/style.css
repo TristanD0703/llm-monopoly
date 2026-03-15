@@ -328,6 +328,29 @@ body {
     border-radius: 0 8px 8px 0;
 }
 
+.history-toggle {
+    display: none;
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    z-index: 1200;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(21, 21, 24, 0.9);
+    color: var(--text-color);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+}
+
+.history-toggle:hover {
+    border-color: rgba(0, 255, 157, 0.45);
+}
+
 .history-list {
     flex: 1;
     overflow-y: auto;
@@ -555,8 +578,32 @@ body {
     transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-@media (max-width: 1099px) {
+@media (max-width: 1099px) and (orientation: portrait) {
     .rotate-overlay {
         display: flex;
+    }
+}
+
+@media (max-width: 1099px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(350px, 82vw);
+        border-radius: 0;
+        z-index: 1150;
+        transform: translateX(100%);
+        transition: transform 0.2s ease;
+    }
+
+    .history-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    body.history-open .sidebar {
+        transform: translateX(0);
     }
 }
