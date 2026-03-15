@@ -1,8 +1,10 @@
 import json
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
-from openai import OpenAI
 from pydantic import BaseModel
+
+from .model_clients.base_client import BaseClient
+from .model_clients.openai_client import OpenAIClient
 
 from ..move_broadcaster import MoveBroadcaster
 
@@ -15,30 +17,34 @@ T = TypeVar("T", bound=BaseModel)
 
 OPEN_ROUTER_BASE = 'https://openrouter.ai/api/v1'
 class AgentIO(BaseIO):
-    def __init__(self, model_name: str, api_key: str, base_url: str | None=None):
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
-        self.system_prompt = SYSTEM_PROMPT
-        self.model_name = model_name
+    def __init__(self, client: BaseClient):
         self.prev_info = ""
         self.verbose = True
+        self.client = client
 
     @classmethod
-    def open_router_from_env(cls, model_name: str): 
+    def open_router_from_env(cls, model_name: str, system_prompt: str = SYSTEM_PROMPT): 
         key = os.getenv('OPENROUTER_API_KEY')
         if not key:
             raise ValueError("OPENROUTER_API_KEY missing in environment")
-        return cls(model_name, key, OPEN_ROUTER_BASE)
+
+        client = OpenAIClient(key, system_prompt, model_name)
+        return cls(client)
 
     @classmethod
-    def local_model_ollama(cls, model_name: str): 
-        return cls(model_name, 'ollama', 'http://localhost:11434/v1')
+    def local_model_ollama(cls, model_name: str, system_prompt: str = SYSTEM_PROMPT): 
+        key = "ollama"
+        base_url =  'http://localhost:11434/v1'
+        client = OpenAIClient(key, system_prompt, model_name, base_url)
+        return cls(client)
     
     @classmethod
-    def openai_from_env(cls, openai_model_name: str):
+    def openai_from_env(cls, openai_model_name: str, system_prompt: str = SYSTEM_PROMPT):
         key = os.getenv('OPENAI_API_KEY')
         if not key:
-            raise ValueError("OPENROUTER_API_KEY missing in environment")
-        return cls(openai_model_name, key)
+            raise ValueError("OPENAI_API_KEY missing in environment")
+        client = OpenAIClient(key, system_prompt, openai_model_name)
+        return cls(client)
 
     def action_input_json_schema(self, options: ActionRequest) -> dict[str, Any]:
         json = ActionInput.model_json_schema()
@@ -52,13 +58,13 @@ class AgentIO(BaseIO):
 
     def request_action(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInput:
         message = self.build_message(options, broadcaster, game_state)
-        res = self.send_request(message, ActionInput, self.action_input_json_schema(options))
+        res = self.client.send_request(message, ActionInput, self.action_input_json_schema(options))
 
         return res
     
     def request_action_int(self, options: ActionRequest, broadcaster: MoveBroadcaster, game_state: GameStateModel | None = None) -> ActionInputInt:
         message = self.build_message(options, broadcaster, game_state)
-        res = self.send_request(message, ActionInputInt)
+        res = self.client.send_request(message, ActionInputInt)
 
         return res
     
@@ -72,7 +78,7 @@ class AgentIO(BaseIO):
             input_type=options.input_type,
         )
         message = self.build_message(trade_request, broadcaster, game_state)
-        res = self.send_request(message, ActionInputTrade)
+        res = self.client.send_request(message, ActionInputTrade)
 
         return res
 
@@ -89,33 +95,3 @@ class AgentIO(BaseIO):
     
     def provide_info(self, message: str):
         self.prev_info += message
-
-    def send_request(self, message: str, model: type[T], schema: Optional[dict[str, Any]]=None) -> T:
-        json_schema = schema if schema else model.model_json_schema() 
-        error_count = 10 
-        for _ in range(error_count):
-            res = self.client.chat.completions.create(messages=[
-                {
-                    'role': 'system',
-                    'content': self.system_prompt
-                },
-                {
-                    'role': 'user',
-                    'content': message
-                }
-            ], 
-            model=self.model_name,
-            response_format={"type": 'json_schema', 'json_schema': {"name": "response", "schema": json_schema}}
-            )
-            text = res.choices[0].message.content 
-            if not text:
-                continue
-
-            try:
-                json_res = json.loads(text.strip())
-                parsed = model.model_validate(json_res)
-                return parsed
-            except ValueError as e:
-                print(e)
-                continue
-        raise ValueError(f"Model responded with incorrect schema {error_count} times. Aborting.")
