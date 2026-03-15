@@ -2,8 +2,11 @@
 #    uv pip compile ./pyproject.toml
 annotated-types==0.7.0
     # via pydantic
+anthropic==0.84.0
+    # via llm-monopoly (./pyproject.toml)
 anyio==4.12.1
     # via
+    #   anthropic
     #   httpx
     #   openai
 bidict==0.23.1
@@ -21,7 +24,11 @@ click==8.3.1
     #   flask
     #   flask-socketio
 distro==1.9.0
-    # via openai
+    # via
+    #   anthropic
+    #   openai
+docstring-parser==0.17.0
+    # via anthropic
 dotenv==0.9.9
     # via llm-monopoly (./pyproject.toml)
 flask==3.1.3
@@ -41,7 +48,9 @@ h11==0.16.0
 httpcore==1.0.9
     # via httpx
 httpx==0.28.1
-    # via openai
+    # via
+    #   anthropic
+    #   openai
 idna==3.11
     # via
     #   anyio
@@ -53,17 +62,20 @@ jinja2==3.1.6
     #   flask
     #   flask-socketio
 jiter==0.13.0
-    # via openai
+    # via
+    #   anthropic
+    #   openai
 markupsafe==3.0.3
     # via
     #   flask
     #   jinja2
     #   werkzeug
-openai==2.26.0
+openai==2.28.0
     # via llm-monopoly (./pyproject.toml)
 pydantic==2.12.5
     # via
     #   llm-monopoly (./pyproject.toml)
+    #   anthropic
     #   openai
 pydantic-core==2.41.5
     # via pydantic
@@ -76,11 +88,14 @@ python-socketio==5.16.1
 simple-websocket==1.1.0
     # via python-engineio
 sniffio==1.3.1
-    # via openai
+    # via
+    #   anthropic
+    #   openai
 tqdm==4.67.3
     # via openai
 typing-extensions==4.15.0
     # via
+    #   anthropic
     #   anyio
     #   openai
     #   pydantic
