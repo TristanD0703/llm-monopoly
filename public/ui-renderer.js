@@ -200,9 +200,9 @@ export function renderPlayers(board, players) {
         if (space) {
             const token = document.createElement('div');
             token.className = 'player-token';
-            token.innerText = player.icon;
             token.style.backgroundColor = player.color;
             token.dataset.name = player.name;
+            token.appendChild(createPlayerIconNode(player.icon, 'player-token-icon'));
             
             // Offset tokens if multiple on same space
             const offset = players.filter(p => p.position === player.position).indexOf(player);
@@ -218,11 +218,14 @@ export function renderBankAccounts(container, players) {
     players.forEach(player => {
         const div = document.createElement('div');
         div.className = 'bank-item';
-        div.innerHTML = `
-            <span class="bank-item-icon">${player.icon}</span>
-            <span class="bank-item-balance">$${player.balance}</span>
-        `;
         div.style.backgroundColor = player.color;
+        div.appendChild(createPlayerIconNode(player.icon, 'bank-item-icon'));
+
+        const balance = document.createElement('span');
+        balance.className = 'bank-item-balance';
+        balance.textContent = `$${player.balance}`;
+        div.appendChild(balance);
+
         container.appendChild(div);
     });
 }
@@ -239,7 +242,12 @@ export function renderHistory(container, history) {
         header.className = 'header';
 
         const playerSpan = document.createElement('span');
-        playerSpan.textContent = `${item.playerIcon || ''} ${item.playerName || 'unknown'}`.trim();
+        playerSpan.className = 'history-player';
+        playerSpan.appendChild(createPlayerIconNode(item.playerIcon, 'history-player-icon'));
+
+        const playerName = document.createElement('span');
+        playerName.textContent = item.playerName || 'unknown';
+        playerSpan.appendChild(playerName);
 
         const timeSpan = document.createElement('span');
         timeSpan.textContent = item.timestamp || '';
@@ -281,6 +289,26 @@ function getContrastTextColor(backgroundColor) {
     const luminance = (0.299 * red) + (0.587 * green) + (0.114 * blue);
 
     return luminance > 160 ? '#101114' : '#f5f5f5';
+}
+
+function createPlayerIconNode(icon, className) {
+    if (icon && typeof icon === 'object' && icon.type === 'asset' && icon.src) {
+        const img = document.createElement('img');
+        img.className = className;
+        img.src = icon.src;
+        img.alt = icon.alt || '';
+        img.setAttribute('aria-hidden', 'true');
+        return img;
+    }
+
+    const span = document.createElement('span');
+    span.className = className;
+    span.textContent = typeof icon === 'string'
+        ? icon
+        : icon && typeof icon === 'object' && icon.type === 'emoji'
+            ? icon.value
+            : '';
+    return span;
 }
 
 export function showPropertyCard(container, spaceId, propertyState) {

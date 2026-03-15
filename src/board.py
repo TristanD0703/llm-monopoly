@@ -220,6 +220,7 @@ class BoardState:
 
         if passed_go:
             player.transact(self.PASS_GO_BONUS)
+            self.broadcaster.add_move(Move(player.name, 'passed_go', "", {}))
         
         player.set_position(next_space)
         move_data = Move(

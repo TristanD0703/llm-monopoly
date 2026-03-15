@@ -296,22 +296,22 @@
     },
     "players": [
         {
-            "name": "AI Player 1",
+            "name": "ChatGPT",
             "type": "openai",
             "model": "gpt-4.1-2025-04-14"
         },
         {
-            "name": "AI Player 2",
+            "name": "Claude Opus",
             "type": "openai",
             "model": "gpt-4.1-2025-04-14"
         },
         {
-            "name": "AI Player 3",
+            "name": "Deepseek r1",
             "type": "openai",
             "model": "gpt-4.1-2025-04-14"
         },
         {
-            "name": "AI Player 4",
+            "name": "Gemini",
             "type": "openai",
             "model": "gpt-4.1-2025-04-14"
         }

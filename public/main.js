@@ -25,6 +25,32 @@ const PLAYER_COLORS = [
 ];
 
 const PLAYER_ICONS = ['🚀', '🤖', '🕹️', '👾', '🐉', '🧠', '🎲', '⚡'];
+const PLAYER_ICON_ASSETS = [
+    {
+        src: 'assets/claude.svg',
+        keywords: ['claude', 'anthropic'],
+    },
+    {
+        src: 'assets/chatgpt.svg',
+        keywords: ['chatgpt', 'openai', 'gpt', 'o1', 'o3', 'o4'],
+    },
+    {
+        src: 'assets/gemini.svg',
+        keywords: ['gemini', 'google'],
+    },
+    {
+        src: 'assets/deepseek.svg',
+        keywords: ['deepseek'],
+    },
+    {
+        src: 'assets/qwen.svg',
+        keywords: ['qwen', 'alibaba'],
+    },
+    {
+        src: 'assets/xai.svg',
+        keywords: ['xai', 'grok'],
+    },
+];
 const HISTORY_LIMIT = 250;
 const OWNABLE_TYPES = new Set(['property', 'railroad', 'utility']);
 const PROPERTY_GROUP_SUFFIXES = new Set([
@@ -69,7 +95,7 @@ function connectToGameServer() {
         );
         State.updateGameState((state) => {
             state.history.push({
-                playerName: 'system',
+                playerName: 'System',
                 playerIcon: '⚠️',
                 playerColor: '',
                 message: 'Socket.IO client failed to load',
@@ -93,8 +119,8 @@ function connectToGameServer() {
         console.log('[socket] connected');
         State.updateGameState((state) => {
             state.history.push({
-                playerName: 'system',
-                playerIcon: '🛰️',
+                playerName: 'System',
+                playerIcon: '⚙️',
                 playerColor: '',
                 message: 'connected to game server',
                 timestamp: new Date().toLocaleTimeString(),
@@ -117,8 +143,8 @@ function connectToGameServer() {
         State.updateGameState((state) => {
             state.usersWatching = 0;
             state.history.push({
-                playerName: 'system',
-                playerIcon: '🛰️',
+                playerName: 'System',
+                playerIcon: '⚙️',
                 playerColor: '',
                 message: 'disconnected from game server',
                 timestamp: new Date().toLocaleTimeString(),
@@ -144,7 +170,7 @@ function connectToGameServer() {
         console.error('[socket] connection error', error);
         State.updateGameState((state) => {
             state.history.push({
-                playerName: 'system',
+                playerName: 'System',
                 playerIcon: '⚠️',
                 playerColor: '',
                 message: 'connection error',
@@ -333,7 +359,12 @@ function syncPlayers(state, names) {
     state.players = names.map((name, index) => {
         const existing = existingPlayers.get(name);
         if (existing) {
-            return { ...existing, id: index, name };
+            return {
+                ...existing,
+                id: index,
+                name,
+                icon: getPlayerIcon(name, index),
+            };
         }
 
         return {
@@ -342,7 +373,7 @@ function syncPlayers(state, names) {
             color: PLAYER_COLORS[index % PLAYER_COLORS.length],
             balance: 1500,
             position: 0,
-            icon: PLAYER_ICONS[index % PLAYER_ICONS.length],
+            icon: getPlayerIcon(name, index),
         };
     });
 }
@@ -361,7 +392,7 @@ function ensurePlayer(state, name) {
             color: PLAYER_COLORS[index % PLAYER_COLORS.length],
             balance: 1500,
             position: 0,
-            icon: PLAYER_ICONS[index % PLAYER_ICONS.length],
+            icon: getPlayerIcon(name, index),
         };
         state.players.push(player);
     }
@@ -515,13 +546,13 @@ function applyActionSpecificStateUpdates(state, event) {
 
 function appendEventToHistory(state, event) {
     const actorName =
-        typeof event.player_name === 'string' ? event.player_name : 'system';
-    const actorIsSystem = actorName.toLowerCase() === 'system';
+        typeof event.player_name === 'string' ? event.player_name : 'System';
+    const actorIsSystem = actorName.toLowerCase() === 'System';
     const actor = actorIsSystem ? null : ensurePlayer(state, actorName);
 
     state.history.push({
         playerName: actorName,
-        playerIcon: actor ? actor.icon : '🛰️',
+        playerIcon: actor ? actor.icon : '⚙️',
         playerColor: actor ? actor.color : '',
         message: buildEventMessage(event),
         timestamp: new Date().toLocaleTimeString(),
@@ -705,6 +736,28 @@ function formatValue(value) {
     }
 
     return text.length > 120 ? `${text.slice(0, 117)}...` : text;
+}
+
+function getPlayerIcon(playerName, index) {
+    const normalized = normalizeLabel(playerName);
+    const assetMatch = PLAYER_ICON_ASSETS.find(({ keywords }) =>
+        keywords.some((keyword) =>
+            normalized.includes(normalizeLabel(keyword)),
+        ),
+    );
+
+    if (assetMatch) {
+        return {
+            type: 'asset',
+            src: assetMatch.src,
+            alt: playerName,
+        };
+    }
+
+    return {
+        type: 'emoji',
+        value: PLAYER_ICONS[index % PLAYER_ICONS.length],
+    };
 }
 
 init();
