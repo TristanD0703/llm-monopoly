@@ -31,7 +31,7 @@ class AgentIO(BaseIO):
         if not key:
             raise ValueError("OPENROUTER_API_KEY missing in environment")
 
-        client = OpenAIClient(key, system_prompt, model_name)
+        client = OpenAIClient(key, system_prompt, model_name, OPEN_ROUTER_BASE)
         return cls(client)
 
     @classmethod
