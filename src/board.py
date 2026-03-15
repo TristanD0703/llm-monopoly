@@ -366,14 +366,25 @@ class BoardState:
     def prompt_target_player_trade(self) -> Player:
         name_actions: list[ActionItem] = []
         name_player: dict[str, Player] = {}
+        curr_player = self.get_curr_player()
         for p in self.players:
-            if p.name == self.get_curr_player().name:
+            if p.name == curr_player.name:
                 continue
 
-            name_actions.append(ActionItem(action_name=p.name, description=""))
+            owned_props = self.player_properties_owned().get(p.name, [])
+            owned_summary = ", ".join(owned_props[:3]) if owned_props else "No properties"
+            if len(owned_props) > 3:
+                owned_summary += ", ..."
+            name_actions.append(ActionItem(action_name=p.name, description=f"Bank ${p.money}. Owns: {owned_summary}"))
             name_player[p.name] = p
-        req = ActionRequest(request="Who would you like to trade with?", available_actions=name_actions)
-        res = self.get_curr_player().io.request_action(req, self.broadcaster)
+        req = ActionRequest(
+            request=(
+                f"You are {curr_player.name}. Choose another player to trade with. "
+                f"You cannot trade with yourself."
+            ),
+            available_actions=name_actions,
+        )
+        res = curr_player.io.request_action(req, self.broadcaster, self.build_game_state())
 
         return name_player[res.action_name]
 

@@ -44,6 +44,37 @@ class BaseIO:
             message += f"Their reasoning behind the trade: {trade.reason}"
         return message
 
+    def trade_context_message(self, game_state: GameStateModel, from_player_name: str, to_player_name: str) -> str:
+        your_properties = game_state.properties_owned.get(from_player_name, [])
+        other_properties = game_state.properties_owned.get(to_player_name, [])
+        your_balance = game_state.player_banks.get(from_player_name, 0)
+        other_balance = game_state.player_banks.get(to_player_name, 0)
+
+        message = (
+            f"You are {from_player_name}. You are proposing a trade to {to_player_name}.\n"
+            f"Only include properties from your own list in properties_giving.\n"
+            f"Only include properties from {to_player_name}'s list in properties_recieving.\n\n"
+            f"Your bank balance: ${your_balance}\n"
+            f"{to_player_name}'s bank balance: ${other_balance}\n\n"
+            f"Properties owned by {from_player_name}:\n"
+        )
+
+        if your_properties:
+            for prop in your_properties:
+                message += f"- {prop}\n"
+        else:
+            message += "- None\n"
+
+        message += f"\nProperties owned by {to_player_name}:\n"
+        if other_properties:
+            for prop in other_properties:
+                message += f"- {prop}\n"
+        else:
+            message += "- None\n"
+
+        message += "\n"
+        return message
+
     def game_state_message(self, game_state: GameStateModel) -> str:
         message = "Here is the current game state:\n\n"
 

@@ -63,7 +63,15 @@ class AgentIO(BaseIO):
         return res
     
     def request_trade_details(self, options: ActionRequest, game_state: GameStateModel, from_player_name: str, to_player_name: str, broadcaster: MoveBroadcaster) -> ActionInputTrade:
-        message = self.build_message(options, broadcaster, game_state)
+        trade_request = ActionRequest(
+            request=(
+                f"{options.request}\n\n"
+                f"{self.trade_context_message(game_state, from_player_name, to_player_name)}"
+            ),
+            available_actions=options.available_actions,
+            input_type=options.input_type,
+        )
+        message = self.build_message(trade_request, broadcaster, game_state)
         res = self.send_request(message, ActionInputTrade)
 
         return res
