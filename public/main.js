@@ -6,6 +6,7 @@ const boardEl = document.getElementById('monopoly-board');
 const bankEl = document.getElementById('bank-accounts');
 const historyEl = document.getElementById('event-history');
 const watcherEl = document.getElementById('watcher-count');
+const turnCountEl = document.getElementById('turn-count');
 const tooltipEl = document.getElementById('tooltip');
 const propertyCardContainer = document.getElementById(
     'property-card-container',
@@ -164,10 +165,12 @@ function connectToGameServer() {
 function updateUI(state) {
     UI.updateBoardOwnership(state.properties, state.players);
     UI.renderPropertyImprovements(state.properties);
+    UI.renderMortgagedProperties(state.properties);
     UI.renderPlayers(boardEl, state.players);
     UI.renderBankAccounts(bankEl, state.players);
     UI.renderHistory(historyEl, state.history);
     watcherEl.innerText = state.usersWatching;
+    turnCountEl.innerText = state.turnCount;
 }
 
 function setupBoardEvents() {
@@ -337,6 +340,11 @@ function applyGameStateSnapshot(state, event) {
     const snapshot = event.game_state;
     if (!snapshot || typeof snapshot !== 'object') {
         return;
+    }
+
+    const turnCount = Number(snapshot.turn_count);
+    if (Number.isFinite(turnCount) && turnCount >= 0) {
+        state.turnCount = Math.trunc(turnCount);
     }
 
     if (snapshot.player_banks && typeof snapshot.player_banks === 'object') {

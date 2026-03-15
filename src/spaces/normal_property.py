@@ -19,17 +19,23 @@ class NormalProperty(BaseProperty):
         self.house_count = 0
         pass
 
-    def add_house(self) -> bool:
+    def can_purchase_house(self) -> bool:
         if not self.board:
             raise ValueError("Board not assigned.")
 
-        if self.house_count == len(self.rent_costs)-1:
+        if not self.owned_by:
             return False
 
-        if (self.owned_by and 
-            self.property_group in self.board.player_monopolies(self.owned_by) and 
-            self.owned_by.transact(-self.house_cost)
-            ):
+        if self.house_count == len(self.rent_costs) - 1:
+            return False
+
+        if self.property_group not in self.board.player_monopolies(self.owned_by):
+            return False
+
+        return self.owned_by.can_afford(self.house_cost)
+
+    def add_house(self) -> bool:
+        if self.can_purchase_house() and self.owned_by and self.owned_by.transact(-self.house_cost):
             self.house_count += 1
             return True
         return False

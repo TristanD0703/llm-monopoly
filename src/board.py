@@ -27,7 +27,8 @@ class BoardState:
                  broadcaster: MoveBroadcaster,
                  property_groups: dict[str, list[int]] = {}, 
                  random_seed: Optional[int] = None,
-                 time_between: float = 5
+                 time_between: float = 5,
+                 force_trades_if_no_monopoly: tuple[bool, int] = (False, 0)
                  ):
         self.broadcaster = broadcaster
         self.players: list[Player] = [] 
@@ -35,17 +36,25 @@ class BoardState:
         self.property_groups = property_groups
         self.spaces: list[Space] = [] 
         self.random = Random(random_seed)
+        self.turn_count = 0
         self.last_roll = -1
         self.doubles = 0 
         self.running = True
         self.repeat = False
         self.time_between = time_between
+        self.forcing_trades, self.force_trade_turn = force_trades_if_no_monopoly
+
 
     def build_action_request(self) -> ActionRequest:
         action_items: list[ActionItem]= []
         curr_player = self.get_curr_player()
 
-        action_items.append(ActionItem(action_name='Roll', description= "Move forward based on dice roll"))
+        if self.forcing_trades and not (self.turn_count > self.force_trade_turn and self.count_player_monopolies() == 0):
+            action_items.append(ActionItem(action_name='Roll', description= "Move forward based on dice roll"))
+        elif self.forcing_trades:
+            curr_player.io.provide_info("The game has gone too long without a monopoly. Please make a trade with a player that will earn you a monopoly.") 
+            self.broadcaster.add_move(Move(curr_player.name, 'forcing_trade', 'Too many turns without monopoly', {}))
+        
         action_items.append(ActionItem(action_name='Trade', description= "Enter a trade discussion with another player. You can exchange properties and/or money."))
         if len(curr_player.property_indexes_owned) > 0:
             action_items.append(ActionItem(action_name='Mortgage', description= 'Manage your properties\' mortgage states'))
@@ -109,7 +118,7 @@ class BoardState:
         banks = self.player_banks()
         owned = self.player_properties_owned()
         property_state = self.property_state()
-        return GameStateModel(player_locations=player_locations, properties_owned=owned, property_state=property_state, player_banks=banks, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
+        return GameStateModel(player_locations=player_locations, properties_owned=owned, property_state=property_state, player_banks=banks, turn_count=self.turn_count, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
 
     def next_turn(self):
         names: list[str] = []
@@ -122,10 +131,14 @@ class BoardState:
         while self.running:
             sleep(self.time_between)
 
+            continuing_turn = self.repeat
             self.repeat = False
             if self.get_curr_player().bankrupt:
                 self.advance_turn()
                 continue
+
+            if not continuing_turn:
+                self.turn_count += 1
 
             state = self.build_game_state()
             req = self.build_action_request()
@@ -236,6 +249,13 @@ class BoardState:
             if self.count_owned_properties_within_group(player, name) == len(props):
                 monopoly_names.add(name)
         return monopoly_names
+
+    def count_player_monopolies(self) -> int:
+        count = 0
+        for player in self.players:
+            if self.player_monopolies(player):
+                count += 1
+        return count
     
     def count_owned_properties_within_group(self, player: Player, group: str):
         owned_properties = player.property_indexes_owned
@@ -366,9 +386,13 @@ class BoardState:
     def get_curr_space(self) -> Space:
         return self.spaces[self.get_curr_player().curr_index]
 
-    def prompt_property_houses(self, props: list[Space]) -> tuple[NormalProperty, str]:
+    def prompt_property_houses(self, props: list[Space], is_purchasing: bool) -> tuple[NormalProperty, str]:
         actions: list[ActionItem] = []
         for p in props:
+            if is_purchasing and hasattr(p, 'can_purchase_house'):
+                if not p.can_purchase_house(): # type: ignore
+                    continue
+
             if hasattr(p, 'house_count'):
                 count = getattr(p, 'house_count') 
                 actions.append(ActionItem(action_name=p.name, description=f"Currently has {count} houses")) 
@@ -390,12 +414,13 @@ class BoardState:
         for g in groups:
             monopoly_properties.extend(list(map(lambda x: self.spaces[x], self.property_groups[g])))
 
-        chosen, reason = self.prompt_property_houses(monopoly_properties)
-        count = curr_player.io.request_action_int(broadcaster=self.broadcaster, options=ActionRequest(request="How many houses do you wish to purchase/sell?", available_actions=[]))
         method = curr_player.io.request_action(ActionRequest(
             available_actions=[ActionItem(action_name="Buy", description=""), ActionItem(action_name="Sell", description="")],
             request="Buy or sell?"
         ), self.broadcaster)
+
+        chosen, reason = self.prompt_property_houses(monopoly_properties, method.action_name=="Buy")
+        count = curr_player.io.request_action_int(broadcaster=self.broadcaster, options=ActionRequest(request="How many houses do you wish to purchase/sell?", available_actions=[]))
 
         if count.number < 0:
             return

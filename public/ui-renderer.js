@@ -146,6 +146,35 @@ export function renderPropertyImprovements(properties) {
     });
 }
 
+export function renderMortgagedProperties(properties) {
+    document.querySelectorAll('.mortgage-marker').forEach((el) => el.remove());
+
+    Object.entries(properties).forEach(([spaceId, data]) => {
+        const space = BOARD_DATA.find((entry) => entry.id === Number(spaceId));
+        if (
+            !space ||
+            !['property', 'railroad', 'utility'].includes(space.type) ||
+            data?.mortgaged !== true
+        ) {
+            return;
+        }
+
+        const marker = document.createElement('div');
+        marker.className = 'mortgage-marker';
+        marker.title = 'Mortgaged';
+        marker.setAttribute('aria-hidden', 'true');
+        marker.innerHTML = `
+            <span class="mortgage-stroke mortgage-stroke-a"></span>
+            <span class="mortgage-stroke mortgage-stroke-b"></span>
+        `;
+
+        const spaceEl = document.getElementById(`space-${spaceId}`);
+        if (spaceEl) {
+            spaceEl.appendChild(marker);
+        }
+    });
+}
+
 function getSide(id) {
     if (id >= 0 && id <= 10) return 'bottom';
     if (id > 10 && id < 20) return 'left';

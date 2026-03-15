@@ -3,6 +3,7 @@ export const gameState = {
     properties: {}, // spaceId -> { ownerId, houses }
     history: [],
     usersWatching: 0,
+    turnCount: 0,
 };
 
 const listeners = [];

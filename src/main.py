@@ -81,7 +81,7 @@ async def main():
     data = load_config(args)
 
     test = MoveBroadcaster([PrintReceiver(), SocketReceiver(socketio)]) 
-    state = BoardState(broadcaster=test)
+    state = BoardState(broadcaster=test, force_trades_if_no_monopoly=(True, 100))
 
     parse_spaces(state, data) 
     parse_players(state, data) 

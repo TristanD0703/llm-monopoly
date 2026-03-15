@@ -42,6 +42,7 @@ class GameStateModel(BaseModel):
     properties_owned: dict[str, list[str]] = Field(..., description="A dictionary where keys are the player names and values are the names of properties owned by the player")
     property_state: dict[str, PropertyStateModel] = Field(..., description="A dictionary keyed by property name with board-specific state such as houses and mortgage status")
     player_banks: dict[str, int] = Field(..., description="How much money each player has")
+    turn_count: int = Field(..., description="The number of turns that have started so far in the game")
     last_roll: int = Field(..., description="The number you just rolled")
     doubles_count: int = Field(..., description="How many doubles you've rolled")
     previous_player_name: str = Field(..., description="name of previous player")
