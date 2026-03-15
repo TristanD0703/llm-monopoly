@@ -4,6 +4,7 @@ from typing import Any, TypeVar
 from pydantic import BaseModel
 
 from .model_clients.base_client import BaseClient
+from .model_clients.claude_client import ClaudeClient
 from .model_clients.openai_client import OpenAIClient
 
 from ..move_broadcaster import MoveBroadcaster
@@ -16,6 +17,8 @@ import os
 T = TypeVar("T", bound=BaseModel)
 
 OPEN_ROUTER_BASE = 'https://openrouter.ai/api/v1'
+GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+OLLAMA_BASE_URL = 'http://localhost:11434/v1'
 class AgentIO(BaseIO):
     def __init__(self, client: BaseClient):
         self.prev_info = ""
@@ -32,10 +35,9 @@ class AgentIO(BaseIO):
         return cls(client)
 
     @classmethod
-    def local_model_ollama(cls, model_name: str, system_prompt: str = SYSTEM_PROMPT): 
+    def local_model_ollama(cls, model_name: str, system_prompt: str = SYSTEM_PROMPT, service_url: str = OLLAMA_BASE_URL): 
         key = "ollama"
-        base_url =  'http://localhost:11434/v1'
-        client = OpenAIClient(key, system_prompt, model_name, base_url)
+        client = OpenAIClient(key, system_prompt, model_name, service_url)
         return cls(client)
     
     @classmethod
@@ -44,6 +46,22 @@ class AgentIO(BaseIO):
         if not key:
             raise ValueError("OPENAI_API_KEY missing in environment")
         client = OpenAIClient(key, system_prompt, openai_model_name)
+        return cls(client)
+
+    @classmethod
+    def gemini_from_env(cls, gemini_model_name: str, system_prompt: str = SYSTEM_PROMPT):
+        key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
+        if not key:
+            raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY missing in environment")
+        client = OpenAIClient(key, system_prompt, gemini_model_name, GEMINI_OPENAI_BASE_URL) 
+        return cls(client)
+
+    @classmethod
+    def claude_from_env(cls, claude_model_name: str, system_prompt: str = SYSTEM_PROMPT):
+        key = os.getenv('ANTHROPIC_API_KEY')
+        if not key:
+            raise ValueError("ANTHROPIC_API_KEY missing in environment")
+        client = ClaudeClient(key, system_prompt, claude_model_name)
         return cls(client)
 
     def action_input_json_schema(self, options: ActionRequest) -> dict[str, Any]:

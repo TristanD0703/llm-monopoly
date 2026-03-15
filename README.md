@@ -3,6 +3,8 @@
 A Monopoly simulation where each player can be controlled by:
 
 - an OpenAI model
+- a Claude model
+- a Gemini model
 - an OpenRouter model
 - a local Ollama model
 - a human in the CLI
@@ -12,7 +14,7 @@ The engine runs game logic (movement, property ownership, auctions, trading, mor
 ## Features
 
 - Config-driven board and player setup from JSON
-- Multiple player backends in the same game (`openai`, `openrouter`, `local`, `cli`)
+- Multiple player backends in the same game (`openai`, `claude`, `gemini`, `openrouter`, `local`, `cli`)
 - Structured move history via a broadcaster/listener pattern
 - Optional Flask + Socket.IO server for static hosting and realtime events
 - Pydantic models for IO contracts and game state snapshots
@@ -23,6 +25,8 @@ The engine runs game logic (movement, property ownership, auctions, trading, mor
 - `uv` (recommended) or `pip`
 - Optional:
   - OpenAI API key (for `openai` players)
+  - Anthropic API key (for `claude` players)
+  - Gemini API key (for `gemini` players)
   - OpenRouter API key (for `openrouter` players)
   - Ollama running locally on `http://localhost:11434` (for `local` players)
 
@@ -41,7 +45,7 @@ Using `pip`:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install dotenv flask flask-socketio openai pydantic
+pip install anthropic dotenv flask flask-socketio openai pydantic
 ```
 
 ### 2. Configure environment variables
@@ -52,6 +56,8 @@ Example:
 
 ```env
 OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+GEMINI_API_KEY=your_gemini_key
 OPENROUTER_API_KEY=your_openrouter_key
 HOST=0.0.0.0
 PORT=8080
@@ -60,6 +66,8 @@ PORT=8080
 Notes:
 
 - `OPENAI_API_KEY` is required for `openai` players.
+- `ANTHROPIC_API_KEY` is required for `claude` players.
+- `GEMINI_API_KEY` or `GOOGLE_API_KEY` is required for `gemini` players.
 - `OPENROUTER_API_KEY` is required for `openrouter` players.
 - `HOST` and `PORT` are used by the Flask/Socket.IO server.
 
@@ -128,6 +136,12 @@ Top-level shape:
 - `openrouter`
   - fields: `name`, `type`, `model`
   - requires `OPENROUTER_API_KEY`
+- `claude`
+  - fields: `name`, `type`, `model`
+  - requires `ANTHROPIC_API_KEY`
+- `gemini`
+  - fields: `name`, `type`, `model`
+  - requires `GEMINI_API_KEY` or `GOOGLE_API_KEY`
 - `local`
   - fields: `name`, `type`, `model`
   - uses Ollama-compatible endpoint at `http://localhost:11434/v1`

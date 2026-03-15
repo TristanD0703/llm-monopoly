@@ -46,6 +46,10 @@ def parse_players(state: BoardState, data: dict[str, Any]):
     for player in data['players']:
             if player['type'] == 'local':
                 io = AgentIO.local_model_ollama(player['model'])
+            elif player['type'] == 'claude':
+                io = AgentIO.claude_from_env(player['model'])
+            elif player['type'] == 'gemini':
+                io = AgentIO.gemini_from_env(player['model'])
             elif player['type'] == 'openai':
                 io = AgentIO.openai_from_env(player['model'])
             elif player['type'] == 'openrouter':
