@@ -9,7 +9,12 @@ from .spaces.normal_property import NormalProperty
 from .trade import Trade
 from .spaces.property import BaseProperty
 from .auction import Auction
-from .io.io_data_models import ActionItem, ActionRequest, GameStateModel
+from .io.io_data_models import (
+    ActionItem,
+    ActionRequest,
+    GameStateModel,
+    PropertyStateModel,
+)
 from .player import Player
 from .spaces.space import Space
 
@@ -85,11 +90,26 @@ class BoardState:
 
         return ret
 
+    def property_state(self) -> dict[str, PropertyStateModel]:
+        ret: dict[str, PropertyStateModel] = {}
+        for space in self.spaces:
+            if not hasattr(space, "owned_by"):
+                continue
+
+            houses = getattr(space, "house_count", 0)
+            mortgaged = getattr(space, "is_mortgaged", False)
+            ret[space.name] = PropertyStateModel(
+                houses=houses,
+                mortgaged=mortgaged,
+            )
+        return ret
+
     def build_game_state(self) -> GameStateModel:
         player_locations = self.player_locations()
         banks = self.player_banks()
         owned = self.player_properties_owned()
-        return GameStateModel(player_locations=player_locations, properties_owned=owned, player_banks=banks, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
+        property_state = self.property_state()
+        return GameStateModel(player_locations=player_locations, properties_owned=owned, property_state=property_state, player_banks=banks, last_roll=self.last_roll, doubles_count=self.doubles, previous_player_name=self.get_prev_player().name)
 
     def next_turn(self):
         names: list[str] = []

@@ -51,15 +51,31 @@ body {
 .bank-item {
     display: flex;
     align-items: center;
-    gap: 15px;
+    justify-content: space-between;
+    gap: 12px;
     padding: 12px 20px;
     border-radius: 8px;
-    background: rgba(21, 21, 24, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     font-size: 1.1rem;
     backdrop-filter: blur(5px);
-    width: fit-content;
+    width: 170px;
+    color: #101114;
+    font-weight: 700;
+}
+
+.bank-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    flex: 0 0 24px;
+}
+
+.bank-item-balance {
+    min-width: 78px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
 .viewer-count {
@@ -142,6 +158,7 @@ body {
 .space-name {
     font-family: var(--font-mono);
     font-weight: 500;
+    font-size: calc(0.65rem - 2px);
     padding: 5px;
     display: flex;
     align-items: center;
@@ -163,6 +180,12 @@ body {
 .space-icon svg {
     max-width: 100%;
     max-height: 100%;
+}
+
+.space-icon img {
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
 }
 
 /* Rotation logic */
@@ -194,6 +217,7 @@ body {
     position: relative;
     flex-shrink: 0;
     border: 1px solid rgba(0,0,0,0.1);
+    z-index: 1;
 }
 
 /* Tabs close to center depending on the flex-direction we set above */
@@ -297,7 +321,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 0 8px 8px 0;
 }
 
 .history-list {
@@ -310,11 +334,10 @@ body {
 }
 
 .history-item {
-    background: rgba(255, 255, 255, 0.03);
     padding: 10px;
     border-radius: 4px;
     font-size: 0.85rem;
-    border-left: 3px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .history-item .header {
@@ -339,6 +362,34 @@ body {
     border: 1px solid var(--accent-color);
 }
 
+.rotate-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 18px;
+    padding: 32px;
+    background: rgba(10, 10, 12, 0.96);
+    text-align: center;
+    z-index: 2000;
+}
+
+.rotate-overlay img {
+    width: 120px;
+    max-width: 35vw;
+    height: auto;
+    filter: brightness(0) invert(1);
+}
+
+.rotate-overlay p {
+    max-width: 340px;
+    font-size: 1rem;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
 .card-header {
     border: 2px solid black;
     padding: 10px;
@@ -358,6 +409,90 @@ body {
     font-weight: bold;
 }
 
-.owner-glow {
-    box-shadow: inset 0 0 15px currentColor;
+.owner-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 15px var(--owner-color, currentColor);
+    pointer-events: none;
+    z-index: 4;
+}
+
+.improvement-markers {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    pointer-events: none;
+    z-index: 3;
+    padding: 4px;
+}
+
+.bottom .improvement-markers,
+.top .improvement-markers {
+    top: 18%;
+    bottom: auto;
+    height: 18px;
+}
+
+.left .improvement-markers,
+.right .improvement-markers {
+    left: 18%;
+    right: auto;
+    width: 18px;
+    height: 100%;
+    flex-direction: column;
+}
+
+.improvement-marker {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.house-marker {
+    width: 10px;
+    height: 8px;
+    background: #22c55e;
+    border: 1px solid #0b3d1d;
+    border-radius: 1px;
+}
+
+.house-marker::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -6px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #15803d;
+}
+
+.hotel-marker {
+    width: 16px;
+    height: 12px;
+    background: #ef4444;
+    border: 1px solid #7f1d1d;
+    border-radius: 2px;
+    box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.15);
+}
+
+.hotel-marker::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: -6px;
+    height: 6px;
+    background: #b91c1c;
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+@media (max-width: 1099px) {
+    .rotate-overlay {
+        display: flex;
+    }
 }

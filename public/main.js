@@ -68,6 +68,7 @@ function connectToGameServer() {
             state.history.push({
                 playerName: 'system',
                 playerIcon: '⚠️',
+                playerColor: '',
                 message: 'Socket.IO client failed to load',
                 timestamp: new Date().toLocaleTimeString(),
                 reason: 'Missing /socket.io/socket.io.js',
@@ -91,11 +92,21 @@ function connectToGameServer() {
             state.history.push({
                 playerName: 'system',
                 playerIcon: '🛰️',
+                playerColor: '',
                 message: 'connected to game server',
                 timestamp: new Date().toLocaleTimeString(),
             });
             trimHistory(state);
         });
+    });
+
+    socket.on('game_state', (snapshot) => {
+        if (!snapshot || typeof snapshot !== 'object') {
+            console.warn('[socket] invalid game_state payload', snapshot);
+            return;
+        }
+
+        hydrateFromGameState(snapshot);
     });
 
     socket.on('disconnect', (reason) => {
@@ -105,6 +116,7 @@ function connectToGameServer() {
             state.history.push({
                 playerName: 'system',
                 playerIcon: '🛰️',
+                playerColor: '',
                 message: 'disconnected from game server',
                 timestamp: new Date().toLocaleTimeString(),
                 reason,
@@ -131,6 +143,7 @@ function connectToGameServer() {
             state.history.push({
                 playerName: 'system',
                 playerIcon: '⚠️',
+                playerColor: '',
                 message: 'connection error',
                 timestamp: new Date().toLocaleTimeString(),
                 reason: error?.message || 'unknown connection error',
@@ -150,6 +163,7 @@ function connectToGameServer() {
 
 function updateUI(state) {
     UI.updateBoardOwnership(state.properties, state.players);
+    UI.renderPropertyImprovements(state.properties);
     UI.renderPlayers(boardEl, state.players);
     UI.renderBankAccounts(bankEl, state.players);
     UI.renderHistory(historyEl, state.history);
@@ -219,6 +233,17 @@ function handleMoveEvent(event) {
         applyActionSpecificStateUpdates(state, event);
         appendEventToHistory(state, event);
         trimHistory(state);
+    });
+}
+
+function hydrateFromGameState(snapshot) {
+    State.updateGameState((state) => {
+        const names = extractPlayerNames({ game_state: snapshot });
+        if (names.length > 0) {
+            syncPlayers(state, names);
+        }
+
+        applyGameStateSnapshot(state, { game_state: snapshot });
     });
 }
 
@@ -353,11 +378,6 @@ function applyGameStateSnapshot(state, event) {
         snapshot.properties_owned &&
         typeof snapshot.properties_owned === 'object'
     ) {
-        const prevHouses = {};
-        Object.entries(state.properties).forEach(([spaceId, propertyState]) => {
-            prevHouses[spaceId] = propertyState?.houses || 0;
-        });
-
         const nextProperties = {};
         Object.entries(snapshot.properties_owned).forEach(
             ([playerName, ownedList]) => {
@@ -374,11 +394,38 @@ function applyGameStateSnapshot(state, event) {
 
                     nextProperties[spaceId] = {
                         ownerId: player.id,
-                        houses: prevHouses[spaceId] || 0,
+                        houses: 0,
+                        mortgaged: false,
                     };
                 });
             },
         );
+
+        if (
+            snapshot.property_state &&
+            typeof snapshot.property_state === 'object'
+        ) {
+            Object.entries(snapshot.property_state).forEach(
+                ([propertyName, propertyState]) => {
+                    const spaceId = resolveOwnableSpaceId(propertyName);
+                    if (
+                        spaceId === null ||
+                        !propertyState ||
+                        typeof propertyState !== 'object' ||
+                        !nextProperties[spaceId]
+                    ) {
+                        return;
+                    }
+
+                    const houses = Number(propertyState.houses);
+                    nextProperties[spaceId].houses = Number.isFinite(houses)
+                        ? Math.max(0, Math.trunc(houses))
+                        : 0;
+                    nextProperties[spaceId].mortgaged =
+                        propertyState.mortgaged === true;
+                },
+            );
+        }
 
         state.properties = nextProperties;
     }
@@ -414,6 +461,7 @@ function applyActionSpecificStateUpdates(state, event) {
         state.properties[spaceId] = {
             ownerId: actor ? actor.id : -1,
             houses: 0,
+            mortgaged: false,
         };
     }
 
@@ -433,6 +481,7 @@ function appendEventToHistory(state, event) {
     state.history.push({
         playerName: actorName,
         playerIcon: actor ? actor.icon : '🛰️',
+        playerColor: actor ? actor.color : '',
         message: buildEventMessage(event),
         timestamp: new Date().toLocaleTimeString(),
         reason: extractReason(event),

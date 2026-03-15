@@ -31,10 +31,16 @@ class ActionRequest(BaseModel):
     request: str = Field(..., description="Defines context to which the actions will be doing")
     input_type: Literal['Action', 'Int', 'Trade'] = 'Action'
 
+class PropertyStateModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    houses: int = Field(..., description="How many houses are currently on this property")
+    mortgaged: bool = Field(..., description="Whether the property is currently mortgaged")
+
 class GameStateModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
     player_locations: dict[str, str] = Field(..., description="A dictionary where they keys are player names and values are the names of the spaces they are currently standing")
     properties_owned: dict[str, list[str]] = Field(..., description="A dictionary where keys are the player names and values are the names of properties owned by the player")
+    property_state: dict[str, PropertyStateModel] = Field(..., description="A dictionary keyed by property name with board-specific state such as houses and mortgage status")
     player_banks: dict[str, int] = Field(..., description="How much money each player has")
     last_roll: int = Field(..., description="The number you just rolled")
     doubles_count: int = Field(..., description="How many doubles you've rolled")

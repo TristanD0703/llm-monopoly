@@ -17,6 +17,8 @@ app = Flask(__name__, static_folder=None)
 socketio = SocketIO(app, cors_allowed_origins="*")
 _spectators: set[str] = set()
 _spectators_lock = threading.Lock()
+_game_state_provider: Any = None
+_game_state_lock = threading.Lock()
 
 
 def _spectator_count() -> int:
@@ -30,6 +32,32 @@ def _broadcast_spectator_count():
         {"count": _spectator_count()},
         namespace="/ws",
     )
+
+
+def set_game_state_provider(provider):
+    global _game_state_provider
+    with _game_state_lock:
+        _game_state_provider = provider
+
+
+def _get_game_state_snapshot() -> dict[str, Any] | None:
+    with _game_state_lock:
+        provider = _game_state_provider
+
+    if provider is None:
+        return None
+
+    snapshot = provider()
+    if snapshot is None:
+        return None
+
+    if hasattr(snapshot, "model_dump"):
+        return snapshot.model_dump()
+
+    if isinstance(snapshot, dict):
+        return snapshot
+
+    raise TypeError("Game state provider must return a dict or Pydantic model")
 
 
 @app.route("/", defaults={"requested_path": INDEX_FILE})
@@ -53,7 +81,9 @@ def serve_static(requested_path: str):
 def on_connect():
     with _spectators_lock:
         _spectators.add(request.sid)
-    emit("connected", {"message": "Socket connected"})
+    snapshot = _get_game_state_snapshot()
+    if snapshot is not None:
+        emit("game_state", snapshot)
     _broadcast_spectator_count()
 
 

@@ -16,7 +16,7 @@ from .spaces.normal_property import NormalProperty
 from .spaces.railroad import Railroad
 from .spaces.space import Space
 from .spaces.tax_space import TaxSpace
-from .server import socketio, start_socket
+from .server import set_game_state_provider, socketio, start_socket
 from flask_socketio import SocketIO
 import dotenv
 
@@ -85,6 +85,7 @@ async def main():
 
     parse_spaces(state, data) 
     parse_players(state, data) 
+    set_game_state_provider(state.build_game_state)
 
     socket_thread = threading.Thread(target=lambda: start_socket(socketio), daemon=True)
     socket_thread.start()
