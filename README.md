@@ -1,5 +1,7 @@
 # LLM Monopoly
 
+[![Watch the video](https://img.youtube.com/vi/5R6PUFFjHtw/hqdefault.jpg)](https://www.youtube.com/embed/5R6PUFFjHtw)
+
 A Monopoly simulation where each player can be controlled by:
 
 - an OpenAI model
