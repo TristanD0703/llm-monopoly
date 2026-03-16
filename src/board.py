@@ -1,6 +1,6 @@
 from random import Random
 from time import sleep
-from typing import Optional
+from typing import Callable, Optional
 
 from .move_broadcaster import Move, MoveBroadcaster
 
@@ -28,7 +28,9 @@ class BoardState:
                  property_groups: dict[str, list[int]] = {}, 
                  random_seed: Optional[int] = None,
                  time_between: float = 5,
-                 force_trades_if_no_monopoly: tuple[bool, int] = (False, 0)
+                 force_trades_if_no_monopoly: tuple[bool, int] = (False, 0),
+                 stop_when_no_viewers: bool = True,
+                 viewer_count_provider: Callable[[], int] | None = None,
                  ):
         self.broadcaster = broadcaster
         self.players: list[Player] = [] 
@@ -43,6 +45,27 @@ class BoardState:
         self.repeat = False
         self.time_between = time_between
         self.forcing_trades, self.force_trade_turn = force_trades_if_no_monopoly
+        self.stop_when_no_viewers = stop_when_no_viewers
+        self.viewer_count_provider = viewer_count_provider
+
+    def has_connected_viewers(self) -> bool:
+        if not self.stop_when_no_viewers:
+            return True
+
+        if self.viewer_count_provider is None:
+            return True
+
+        return self.viewer_count_provider() > 0
+
+    def wait_for_connected_viewer(self):
+        if self.has_connected_viewers():
+            return
+
+        print("Pausing game until a websocket viewer connects.")
+        while self.running and not self.has_connected_viewers():
+            sleep(1)
+        if self.running:
+            print("Websocket viewer connected. Resuming game.")
 
 
     def build_action_request(self) -> ActionRequest:
@@ -138,6 +161,9 @@ class BoardState:
                 continue
 
             if not continuing_turn:
+                self.wait_for_connected_viewer()
+                if not self.running:
+                    break
                 self.turn_count += 1
 
             state = self.build_game_state()

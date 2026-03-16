@@ -16,7 +16,7 @@ from .spaces.normal_property import NormalProperty
 from .spaces.railroad import Railroad
 from .spaces.space import Space
 from .spaces.tax_space import TaxSpace
-from .server import set_game_state_provider, socketio, start_socket
+from .server import set_game_state_provider, socketio, spectator_count, start_socket
 from flask_socketio import SocketIO
 import dotenv
 
@@ -85,7 +85,11 @@ async def main():
     data = load_config(args)
 
     test = MoveBroadcaster([PrintReceiver(), SocketReceiver(socketio)]) 
-    state = BoardState(broadcaster=test, force_trades_if_no_monopoly=(True, 100))
+    state = BoardState(
+        broadcaster=test,
+        force_trades_if_no_monopoly=(True, 100),
+        viewer_count_provider=spectator_count,
+    )
 
     parse_spaces(state, data) 
     parse_players(state, data) 

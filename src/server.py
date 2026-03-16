@@ -26,6 +26,10 @@ def _spectator_count() -> int:
         return len(_spectators)
 
 
+def spectator_count() -> int:
+    return _spectator_count()
+
+
 def _broadcast_spectator_count():
     socketio.emit(
         "spectator_count",
