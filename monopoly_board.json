@@ -296,14 +296,14 @@
     },
     "players": [
         {
-            "name": "ChatGPT 4.1",
-            "type": "openai",
-            "model": "gpt-4.1-2025-04-14"
+            "name": "ChatGPT 5",
+            "type": "openrouter",
+            "model": "openai/gpt-5-nano"
         },
         {
-            "name": "Claude Sonnet 4.6",
-            "type": "claude",
-            "model": "claude-sonnet-4-6"
+            "name": "Claude 3 Haiku",
+            "type": "openrouter",
+            "model": "anthropic/claude-3-haiku"
         },
         {
             "name": "Deepseek V3.2",
@@ -311,9 +311,9 @@
             "model": "deepseek/deepseek-v3.2"
         },
         {
-            "name": "Gemini 3.1 Pro",
-            "type": "gemini",
-            "model": "gemini-3.1-pro-preview"
+            "name": "Gemini 3.1 Flash Lite",
+            "type": "openrouter",
+            "model": "google/gemini-3.1-flash-lite-preview"
         }
     ]
 }
