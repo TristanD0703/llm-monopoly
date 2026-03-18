@@ -52,6 +52,8 @@ const PLAYER_ICON_ASSETS = [
     },
 ];
 const HISTORY_LIMIT = 250;
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+const ACTIVITY_HEARTBEAT_MS = 5000;
 const OWNABLE_TYPES = new Set(['property', 'railroad', 'utility']);
 const PROPERTY_GROUP_SUFFIXES = new Set([
     'brown',
@@ -93,15 +95,10 @@ function connectToGameServer() {
         console.error(
             '[socket] window.io is not available. Did /socket.io/socket.io.js load?',
         );
-        State.updateGameState((state) => {
-            state.history.push({
-                playerName: 'System',
-                playerIcon: '⚠️',
-                playerColor: '',
-                message: 'Socket.IO client failed to load',
-                timestamp: new Date().toLocaleTimeString(),
-                reason: 'Missing /socket.io/socket.io.js',
-            });
+        pushSystemHistoryEntry({
+            icon: '⚠️',
+            message: 'Socket.IO client failed to load',
+            reason: 'Missing /socket.io/socket.io.js',
         });
         return;
     }
@@ -110,6 +107,108 @@ function connectToGameServer() {
         path: '/socket.io',
         transports: ['websocket', 'polling'],
     });
+    let inactivityTimerId = null;
+    let lastActivityAt = Date.now();
+    let hasInactivityDisconnected = false;
+
+    function recordBrowserActivity({ force = false } = {}) {
+        if (hasInactivityDisconnected) {
+            return;
+        }
+
+        const now = Date.now();
+        if (now - lastActivityAt >= INACTIVITY_TIMEOUT_MS) {
+            disconnectForInactivity();
+            return;
+        }
+
+        if (!force && now - lastActivityAt < ACTIVITY_HEARTBEAT_MS) {
+            return;
+        }
+
+        lastActivityAt = now;
+        scheduleInactivityDisconnect();
+    }
+
+    function clearInactivityDisconnect() {
+        if (inactivityTimerId !== null) {
+            window.clearTimeout(inactivityTimerId);
+            inactivityTimerId = null;
+        }
+    }
+
+    function scheduleInactivityDisconnect() {
+        clearInactivityDisconnect();
+        inactivityTimerId = window.setTimeout(() => {
+            const inactiveFor = Date.now() - lastActivityAt;
+            if (inactiveFor < INACTIVITY_TIMEOUT_MS) {
+                scheduleInactivityDisconnect();
+                return;
+            }
+
+            disconnectForInactivity();
+        }, INACTIVITY_TIMEOUT_MS);
+    }
+
+    function removeActivityListeners() {
+        window.removeEventListener('mousemove', handleMouseActivity);
+        window.removeEventListener('mousedown', handleDiscreteActivity);
+        window.removeEventListener('click', handleDiscreteActivity);
+        window.removeEventListener('touchstart', handleDiscreteActivity);
+        window.removeEventListener('focus', handleDiscreteActivity);
+        document.removeEventListener(
+            'visibilitychange',
+            handleVisibilityChange,
+        );
+    }
+
+    function disconnectForInactivity() {
+        if (hasInactivityDisconnected) {
+            return;
+        }
+
+        hasInactivityDisconnected = true;
+        clearInactivityDisconnect();
+        removeActivityListeners();
+        socket.io.opts.reconnection = false;
+        socket.disconnect();
+
+        State.updateGameState((state) => {
+            state.usersWatching = 0;
+            state.history.push({
+                playerName: 'System',
+                playerIcon: '⏱️',
+                playerColor: '',
+                message:
+                    'disconnected after 30 minutes of browser inactivity. Refresh the page to reconnect.',
+                timestamp: new Date().toLocaleTimeString(),
+                reason: 'No tab focus, mouse movement, or clicks were detected.',
+            });
+            trimHistory(state);
+        });
+    }
+
+    function handleMouseActivity() {
+        recordBrowserActivity();
+    }
+
+    function handleDiscreteActivity() {
+        recordBrowserActivity({ force: true });
+    }
+
+    function handleVisibilityChange() {
+        if (document.visibilityState === 'visible') {
+            recordBrowserActivity({ force: true });
+        }
+    }
+
+    window.addEventListener('mousemove', handleMouseActivity);
+    window.addEventListener('mousedown', handleDiscreteActivity);
+    window.addEventListener('click', handleDiscreteActivity);
+    window.addEventListener('touchstart', handleDiscreteActivity);
+    window.addEventListener('focus', handleDiscreteActivity);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    scheduleInactivityDisconnect();
 
     socket.onAny((eventName, payload) => {
         console.log(`[socket:${eventName}]`, payload);
@@ -117,15 +216,10 @@ function connectToGameServer() {
 
     socket.on('connect', () => {
         console.log('[socket] connected');
-        State.updateGameState((state) => {
-            state.history.push({
-                playerName: 'System',
-                playerIcon: '⚙️',
-                playerColor: '',
-                message: 'connected to game server',
-                timestamp: new Date().toLocaleTimeString(),
-            });
-            trimHistory(state);
+        recordBrowserActivity({ force: true });
+        pushSystemHistoryEntry({
+            icon: '⚙️',
+            message: 'connected to game server',
         });
     });
 
@@ -140,6 +234,13 @@ function connectToGameServer() {
 
     socket.on('disconnect', (reason) => {
         console.log('[socket] disconnected', reason);
+        if (hasInactivityDisconnected) {
+            State.updateGameState((state) => {
+                state.usersWatching = 0;
+            });
+            return;
+        }
+
         State.updateGameState((state) => {
             state.usersWatching = 0;
             state.history.push({
@@ -168,6 +269,10 @@ function connectToGameServer() {
 
     socket.on('connect_error', (error) => {
         console.error('[socket] connection error', error);
+        if (hasInactivityDisconnected) {
+            return;
+        }
+
         State.updateGameState((state) => {
             state.history.push({
                 playerName: 'System',
@@ -187,6 +292,20 @@ function connectToGameServer() {
             return;
         }
         handleMoveEvent(event);
+    });
+}
+
+function pushSystemHistoryEntry({ icon = '⚙️', message, reason = '' }) {
+    State.updateGameState((state) => {
+        state.history.push({
+            playerName: 'System',
+            playerIcon: icon,
+            playerColor: '',
+            message,
+            timestamp: new Date().toLocaleTimeString(),
+            reason,
+        });
+        trimHistory(state);
     });
 }
 
